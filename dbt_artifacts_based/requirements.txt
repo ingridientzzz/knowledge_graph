@@ -1,0 +1,21 @@
+# Core dependencies for dbt artifacts-based knowledge graph
+networkx>=3.0
+pandas>=1.5.0
+numpy>=1.24.0
+
+# Optional visualization dependencies
+plotly>=5.15.0
+matplotlib>=3.7.0
+pyvis>=0.3.2
+
+# Streamlit for web interface (optional)
+streamlit>=1.28.0
+streamlit-agraph>=0.0.45
+
+# Development and testing
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Data processing
+pydantic>=2.0.0

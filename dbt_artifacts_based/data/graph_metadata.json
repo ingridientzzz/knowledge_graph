@@ -1,0 +1,37 @@
+{
+  "created_at": "2025-08-06T19:26:26.514698",
+  "statistics": {
+    "total_nodes": 12104,
+    "total_edges": 16397,
+    "node_counts": {
+      "model": 771,
+      "test": 996,
+      "source": 537,
+      "column": 7822,
+      "exposure": 2,
+      "metric": 0,
+      "package": 44,
+      "macro": 1766,
+      "seed": 44,
+      "snapshot": 3,
+      "analysis": 119
+    },
+    "edge_counts": {
+      "depends_on": 2055,
+      "has_column": 7822,
+      "tests": 1081,
+      "selects_from": 1178,
+      "uses": 23,
+      "derives_from": 0,
+      "part_of_package": 4238,
+      "exposes": 0,
+      "measures": 0
+    },
+    "manifest_version": "1.10.6"
+  },
+  "file_info": {
+    "nodes_file": "data/nodes.json",
+    "edges_file": "data/edges.json",
+    "graph_file": "data/knowledge_graph.gpickle"
+  }
+}
