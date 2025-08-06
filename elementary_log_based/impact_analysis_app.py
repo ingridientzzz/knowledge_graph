@@ -23,7 +23,7 @@ from src.graph_entities import NodeType, EdgeType
 
 # Set page config
 st.set_page_config(
-    page_title="dbt Model Impact Analysis",
+    page_title="dbt Impact Analysis",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -96,6 +96,20 @@ def get_model_list(graph):
     # Sort by name
     return sorted(models, key=lambda x: x[1])
 
+def get_source_list(graph):
+    """Get list of sources from the graph."""
+    sources = []
+    for node_id, attrs in graph.nodes(data=True):
+        if attrs.get('node_type') == NodeType.SOURCE.value:
+            source_name = attrs.get('properties', {}).get('source_name', '')
+            name = attrs.get('name', node_id)
+            # Format as source_name.name for clarity
+            display_name = f"{source_name}.{name}" if source_name else name
+            sources.append((node_id, display_name))
+    
+    # Sort by name
+    return sorted(sources, key=lambda x: x[1])
+
 def get_upstream_dependencies(graph, node_id, depth=None):
     """Get upstream dependencies (parents) of a node."""
     if depth == 0:
@@ -143,7 +157,7 @@ def create_impact_subgraph(graph, selected_model, upstream_depth, downstream_dep
     
     return subgraph, upstream_nodes, downstream_nodes
 
-def create_impact_visualization(graph, subgraph, selected_model, upstream_nodes, downstream_nodes):
+def create_impact_visualization(graph, subgraph, selected_node, upstream_nodes, downstream_nodes):
     """Create interactive visualization of the impact graph."""
     # Create nodes for agraph
     nodes = []
@@ -152,7 +166,7 @@ def create_impact_visualization(graph, subgraph, selected_model, upstream_nodes,
         name = attrs.get('name', node_id)
         
         # Determine node color based on impact
-        if node_id == selected_model:
+        if node_id == selected_node:
             color = COLORS['selected']
             size = 30
         elif node_id in upstream_nodes:
@@ -171,13 +185,23 @@ def create_impact_visualization(graph, subgraph, selected_model, upstream_nodes,
             if k not in ['node_type', 'name'] and isinstance(v, (str, int, float, bool)) or v is None:
                 tooltip += f"{k}: {v}<br>"
         
+        # Determine node shape based on node type
+        if node_type == NodeType.MODEL.value:
+            shape = "dot"  # circle for models
+        elif node_type == NodeType.TEST.value:
+            shape = "triangle"  # triangle for tests
+        elif node_type == NodeType.SOURCE.value:
+            shape = "diamond"  # diamond for sources
+        else:
+            shape = "square"  # default shape
+        
         # Create node
         nodes.append(Node(
             id=node_id,
             label=name,
             size=size,
             color=color,
-            shape="dot" if node_type == NodeType.MODEL.value else "triangle" if node_type == NodeType.TEST.value else "square",
+            shape=shape,
             title=tooltip
         ))
     
@@ -187,10 +211,10 @@ def create_impact_visualization(graph, subgraph, selected_model, upstream_nodes,
         edge_type = attrs.get('edge_type', 'related')
         
         # Determine edge color based on impact
-        if source == selected_model:
+        if source == selected_node:
             color = COLORS['downstream']
             width = 3
-        elif target == selected_model:
+        elif target == selected_node:
             color = COLORS['upstream']
             width = 3
         else:
@@ -227,26 +251,30 @@ def create_impact_visualization(graph, subgraph, selected_model, upstream_nodes,
     
     return nodes, edges, config
 
-def create_impact_metrics(graph, selected_model, upstream_nodes, downstream_nodes):
+def create_impact_metrics(graph, selected_node, upstream_nodes, downstream_nodes):
     """Create metrics for impact analysis."""
     metrics = {}
+    
+    # Get node type
+    node_type = graph.nodes[selected_node].get('node_type')
+    metrics['node_type'] = node_type
     
     # Basic counts
     metrics['upstream_count'] = len(upstream_nodes)
     metrics['downstream_count'] = len(downstream_nodes)
-    metrics['total_impact'] = len(upstream_nodes) + len(downstream_nodes) + 1  # +1 for selected model
+    metrics['total_impact'] = len(upstream_nodes) + len(downstream_nodes) + 1  # +1 for selected node
     
     # Count by node type
     upstream_by_type = {}
     downstream_by_type = {}
     
     for node_id in upstream_nodes:
-        node_type = graph.nodes[node_id].get('node_type', 'unknown')
-        upstream_by_type[node_type] = upstream_by_type.get(node_type, 0) + 1
+        type_val = graph.nodes[node_id].get('node_type', 'unknown')
+        upstream_by_type[type_val] = upstream_by_type.get(type_val, 0) + 1
     
     for node_id in downstream_nodes:
-        node_type = graph.nodes[node_id].get('node_type', 'unknown')
-        downstream_by_type[node_type] = downstream_by_type.get(node_type, 0) + 1
+        type_val = graph.nodes[node_id].get('node_type', 'unknown')
+        downstream_by_type[type_val] = downstream_by_type.get(type_val, 0) + 1
     
     metrics['upstream_by_type'] = upstream_by_type
     metrics['downstream_by_type'] = downstream_by_type
@@ -263,27 +291,36 @@ def create_impact_metrics(graph, selected_model, upstream_nodes, downstream_node
         risk_factors.append(f"Moderate downstream impact ({len(downstream_nodes)} nodes)")
     
     # Check for critical downstream models (those with many dependencies)
-    critical_models = []
+    critical_nodes = []
     for node_id in downstream_nodes:
-        if graph.nodes[node_id].get('node_type') == NodeType.MODEL.value:
-            downstream_count = len(list(graph.successors(node_id)))
-            if downstream_count > 5:
-                name = graph.nodes[node_id].get('name', node_id)
-                critical_models.append((name, downstream_count))
+        downstream_count = len(list(graph.successors(node_id)))
+        if downstream_count > 5:
+            name = graph.nodes[node_id].get('name', node_id)
+            node_type_val = graph.nodes[node_id].get('node_type', 'unknown')
+            critical_nodes.append((name, downstream_count, node_type_val))
     
-    if critical_models:
+    if critical_nodes:
         if risk_level != "High":
             risk_level = "Medium"
-        risk_factors.append(f"Affects {len(critical_models)} critical models")
+        
+        # Count critical models and sources
+        critical_models = [n for n in critical_nodes if n[2] == NodeType.MODEL.value]
+        critical_sources = [n for n in critical_nodes if n[2] == NodeType.SOURCE.value]
+        
+        if critical_models:
+            risk_factors.append(f"Affects {len(critical_models)} critical models")
+        
+        if critical_sources:
+            risk_factors.append(f"Affects {len(critical_sources)} critical sources")
     
     metrics['risk_level'] = risk_level
     metrics['risk_factors'] = risk_factors
-    metrics['critical_models'] = sorted(critical_models, key=lambda x: x[1], reverse=True)
+    metrics['critical_nodes'] = sorted(critical_nodes, key=lambda x: x[1], reverse=True)
     
     return metrics
 
-def create_impact_tables(graph, selected_model, upstream_nodes, downstream_nodes):
-    """Create tables of impacted models."""
+def create_impact_tables(graph, selected_node, upstream_nodes, downstream_nodes):
+    """Create tables of impacted nodes."""
     # Upstream table
     upstream_data = []
     for node_id in upstream_nodes:
@@ -291,15 +328,25 @@ def create_impact_tables(graph, selected_model, upstream_nodes, downstream_nodes
         node_type = attrs.get('node_type', 'unknown')
         name = attrs.get('name', node_id)
         
-        # Get properties
-        materialization = attrs.get('materialization', 'unknown')
+        # Get properties based on node type
+        if node_type == NodeType.MODEL.value:
+            materialization = attrs.get('materialization', 'unknown')
+            location = f"{attrs.get('database_name', '')}.{attrs.get('schema_name', '')}"
+        elif node_type == NodeType.SOURCE.value:
+            materialization = "source"
+            source_name = attrs.get('properties', {}).get('source_name', '')
+            location = f"{attrs.get('database_name', '')}.{attrs.get('schema_name', '')}"
+        else:
+            materialization = "unknown"
+            location = ""
         
         # Add to data
         upstream_data.append({
             'id': node_id,
             'name': name,
             'type': node_type,
-            'materialization': materialization
+            'materialization': materialization,
+            'location': location
         })
     
     # Downstream table
@@ -309,15 +356,25 @@ def create_impact_tables(graph, selected_model, upstream_nodes, downstream_nodes
         node_type = attrs.get('node_type', 'unknown')
         name = attrs.get('name', node_id)
         
-        # Get properties
-        materialization = attrs.get('materialization', 'unknown')
+        # Get properties based on node type
+        if node_type == NodeType.MODEL.value:
+            materialization = attrs.get('materialization', 'unknown')
+            location = f"{attrs.get('database_name', '')}.{attrs.get('schema_name', '')}"
+        elif node_type == NodeType.SOURCE.value:
+            materialization = "source"
+            source_name = attrs.get('properties', {}).get('source_name', '')
+            location = f"{attrs.get('database_name', '')}.{attrs.get('schema_name', '')}"
+        else:
+            materialization = "unknown"
+            location = ""
         
         # Add to data
         downstream_data.append({
             'id': node_id,
             'name': name,
             'type': node_type,
-            'materialization': materialization
+            'materialization': materialization,
+            'location': location
         })
     
     # Convert to dataframes
@@ -328,9 +385,9 @@ def create_impact_tables(graph, selected_model, upstream_nodes, downstream_nodes
 
 def main():
     """Main Streamlit app."""
-    st.title("🔍 dbt Model Impact Analysis")
+    st.title("🔍 dbt Impact Analysis")
     st.markdown("""
-    Analyze the impact of changes to a specific model by visualizing its upstream and downstream dependencies.
+    Analyze the impact of changes to a specific model or source by visualizing its upstream and downstream dependencies.
     This helps assess the risk and scope of changes before implementation.
     """)
     
@@ -346,19 +403,44 @@ def main():
     # Sidebar
     st.sidebar.title("Impact Analysis Settings")
     
-    # Get model list
+    # Get node lists
     models = get_model_list(graph)
-    if not models:
-        st.error("No models found in the graph. Please check your data.")
-        return
-        
-    model_names = [name for _, name in models]
-    model_ids = [id for id, _ in models]
+    sources = get_source_list(graph)
     
-    # Model selection
-    selected_model_name = st.sidebar.selectbox("Select a model to analyze", model_names)
-    selected_model_index = model_names.index(selected_model_name)
-    selected_model = model_ids[selected_model_index]
+    if not models and not sources:
+        st.error("No models or sources found in the graph. Please check your data.")
+        return
+    
+    # Select node type
+    node_type = st.sidebar.radio(
+        "Select node type to analyze",
+        ["Model", "Source"],
+        help="Choose to analyze a model or a source"
+    )
+    
+    if node_type == "Model":
+        if not models:
+            st.error("No models found in the graph. Please check your data.")
+            return
+            
+        # Model selection
+        node_names = [name for _, name in models]
+        node_ids = [id for id, _ in models]
+        node_type_label = "model"
+    else:  # Source
+        if not sources:
+            st.error("No sources found in the graph. Please check your data.")
+            return
+            
+        # Source selection
+        node_names = [name for _, name in sources]
+        node_ids = [id for id, _ in sources]
+        node_type_label = "source"
+    
+    # Node selection
+    selected_node_name = st.sidebar.selectbox(f"Select a {node_type_label} to analyze", node_names)
+    selected_node_index = node_names.index(selected_node_name)
+    selected_node = node_ids[selected_node_index]
     
     # Depth settings
     st.sidebar.subheader("Dependency Depth")
@@ -373,11 +455,11 @@ def main():
     
     # Create impact subgraph
     subgraph, upstream_nodes, downstream_nodes = create_impact_subgraph(
-        graph, selected_model, upstream_depth, downstream_depth, include_tests
+        graph, selected_node, upstream_depth, downstream_depth, include_tests
     )
     
     # Calculate impact metrics
-    metrics = create_impact_metrics(graph, selected_model, upstream_nodes, downstream_nodes)
+    metrics = create_impact_metrics(graph, selected_node, upstream_nodes, downstream_nodes)
     
     # Main content - metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -401,10 +483,13 @@ def main():
         for factor in metrics['risk_factors']:
             st.warning(factor)
     
-    # Critical models
-    if metrics['critical_models']:
-        st.subheader("🚨 Critical Downstream Models")
-        critical_df = pd.DataFrame(metrics['critical_models'], columns=['Model', 'Downstream Dependencies'])
+    # Critical nodes
+    if metrics['critical_nodes']:
+        st.subheader("🚨 Critical Downstream Nodes")
+        critical_df = pd.DataFrame(
+            [(name, count, node_type) for name, count, node_type in metrics['critical_nodes']], 
+            columns=['Name', 'Downstream Dependencies', 'Type']
+        )
         st.dataframe(critical_df, use_container_width=True)
     
     # Visualization
@@ -412,7 +497,7 @@ def main():
     
     # Create visualization
     nodes, edges, config = create_impact_visualization(
-        graph, subgraph, selected_model, upstream_nodes, downstream_nodes
+        graph, subgraph, selected_node, upstream_nodes, downstream_nodes
     )
     
     if len(nodes) > 0:
@@ -425,7 +510,7 @@ def main():
     st.subheader("Detailed Impact Analysis")
     
     # Create tables
-    upstream_df, downstream_df = create_impact_tables(graph, selected_model, upstream_nodes, downstream_nodes)
+    upstream_df, downstream_df = create_impact_tables(graph, selected_node, upstream_nodes, downstream_nodes)
     
     # Display tables
     tab1, tab2 = st.tabs(["Upstream Dependencies", "Downstream Impact"])
@@ -444,34 +529,51 @@ def main():
         else:
             st.info("No downstream dependencies found.")
     
-    # Model details
-    st.subheader("Selected Model Details")
+    # Node details
+    node_type_display = "Model" if graph.nodes[selected_node].get('node_type') == NodeType.MODEL.value else "Source" if graph.nodes[selected_node].get('node_type') == NodeType.SOURCE.value else "Node"
+    st.subheader(f"Selected {node_type_display} Details")
     
-    # Get model attributes
-    model_attrs = graph.nodes[selected_model]
-    model_name = model_attrs.get('name', selected_model)
-    model_type = model_attrs.get('node_type', 'unknown')
+    # Get node attributes
+    node_attrs = graph.nodes[selected_node]
+    node_name = node_attrs.get('name', selected_node)
+    node_type = node_attrs.get('node_type', 'unknown')
     
-    # Display model details
+    # Display node details
     col1, col2 = st.columns(2)
     
     with col1:
         st.write("**Basic Information**")
-        st.write(f"ID: `{selected_model}`")
-        st.write(f"Name: {model_name}")
-        st.write(f"Type: {model_type}")
+        st.write(f"ID: `{selected_node}`")
+        st.write(f"Name: {node_name}")
+        st.write(f"Type: {node_type}")
         
-        if 'materialization' in model_attrs:
-            st.write(f"Materialization: {model_attrs['materialization']}")
+        if node_type == NodeType.MODEL.value:
+            if 'materialization' in node_attrs:
+                st.write(f"Materialization: {node_attrs['materialization']}")
+            
+            if 'database_name' in node_attrs and 'schema_name' in node_attrs:
+                st.write(f"Location: {node_attrs.get('database_name')}.{node_attrs.get('schema_name')}")
         
-        if 'database_name' in model_attrs and 'schema_name' in model_attrs:
-            st.write(f"Location: {model_attrs.get('database_name')}.{model_attrs.get('schema_name')}")
+        elif node_type == NodeType.SOURCE.value:
+            source_name = node_attrs.get('properties', {}).get('source_name', 'unknown')
+            st.write(f"Source Name: {source_name}")
+            
+            if 'database_name' in node_attrs and 'schema_name' in node_attrs:
+                st.write(f"Location: {node_attrs.get('database_name')}.{node_attrs.get('schema_name')}")
     
     with col2:
         st.write("**Additional Properties**")
-        for k, v in model_attrs.items():
-            if k not in ['name', 'node_type', 'materialization', 'database_name', 'schema_name'] and isinstance(v, (str, int, float, bool)) or v is None:
+        exclude_keys = ['name', 'node_type', 'materialization', 'database_name', 'schema_name']
+        
+        for k, v in node_attrs.items():
+            if k not in exclude_keys and isinstance(v, (str, int, float, bool)) or v is None:
                 st.write(f"{k}: {v}")
+                
+        # Display properties from properties dict for sources
+        if node_type == NodeType.SOURCE.value and 'properties' in node_attrs:
+            for k, v in node_attrs.get('properties', {}).items():
+                if k not in ['source_name'] and isinstance(v, (str, int, float, bool)) or v is None:
+                    st.write(f"{k}: {v}")
     
     # Action recommendations
     st.subheader("Recommended Actions")

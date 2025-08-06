@@ -239,9 +239,9 @@ class ElementaryDataExtractor:
                 'models': self.extract_models(),
                 'tests': self.extract_tests(),
                 'sources': self.extract_sources(),
-                'test_results': self.extract_test_results(),
-                'run_results': self.extract_run_results(),
-                'invocations': self.extract_invocations(),
+                #'test_results': self.extract_test_results(),
+                #'run_results': self.extract_run_results(),
+                #'invocations': self.extract_invocations(),
                 'model_columns': self.extract_model_columns()
             }
             
