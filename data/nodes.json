@@ -1,0 +1,1264 @@
+[
+  {
+    "id": "model.elementary.dbt_tests",
+    "name": "dbt_tests",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_tests.sql",
+    "alias": "dbt_tests",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_artifacts_hashes",
+    "name": "dbt_artifacts_hashes",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_artifacts_hashes.sql",
+    "alias": "dbt_artifacts_hashes",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_columns",
+    "name": "dbt_columns",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_columns.sql",
+    "alias": "dbt_columns",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_exposures",
+    "name": "dbt_exposures",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_exposures.sql",
+    "alias": "dbt_exposures",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_invocations",
+    "name": "dbt_invocations",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_invocations.sql",
+    "alias": "dbt_invocations",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "generated_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_metrics",
+    "name": "dbt_metrics",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_metrics.sql",
+    "alias": "dbt_metrics",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_models",
+    "name": "dbt_models",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_models.sql",
+    "alias": "dbt_models",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_run_results",
+    "name": "dbt_run_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_run_results.sql",
+    "alias": "dbt_run_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "deprecated_columns": [
+        {
+          "name": "compiled_sql",
+          "data_type": "string",
+          "description": "The compiled SQL executed against the database."
+        }
+      ],
+      "dedup_by_column": "model_execution_id",
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "generated_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_seeds",
+    "name": "dbt_seeds",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_seeds.sql",
+    "alias": "dbt_seeds",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_snapshots",
+    "name": "dbt_snapshots",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_snapshots.sql",
+    "alias": "dbt_snapshots",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_sources",
+    "name": "dbt_sources",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/dbt_artifacts/dbt_sources.sql",
+    "alias": "dbt_sources",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.schema_columns_snapshot",
+    "name": "schema_columns_snapshot",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/data_monitoring/schema_changes/schema_columns_snapshot.sql",
+    "alias": "schema_columns_snapshot",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "detected_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.dbt_source_freshness_results",
+    "name": "dbt_source_freshness_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/run_results/dbt_source_freshness_results.sql",
+    "alias": "dbt_source_freshness_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "generated_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.elementary_test_results",
+    "name": "elementary_test_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/run_results/elementary_test_results.sql",
+    "alias": "elementary_test_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "detected_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.job_run_results",
+    "name": "job_run_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/run_results/job_run_results.sql",
+    "alias": "job_run_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.model_run_results",
+    "name": "model_run_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/run_results/model_run_results.sql",
+    "alias": "model_run_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.seed_run_results",
+    "name": "seed_run_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/run_results/seed_run_results.sql",
+    "alias": "seed_run_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.snapshot_run_results",
+    "name": "snapshot_run_results",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/run_results/snapshot_run_results.sql",
+    "alias": "snapshot_run_results",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.test_result_rows",
+    "name": "test_result_rows",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/run_results/test_result_rows.sql",
+    "alias": "test_result_rows",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "detected_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.metadata",
+    "name": "metadata",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "table",
+    "package_name": "elementary",
+    "path": "edr/system/metadata.sql",
+    "alias": "metadata",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.monitors_runs",
+    "name": "monitors_runs",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/system/monitors_runs.sql",
+    "alias": "monitors_runs",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_sus_consolidated",
+    "name": "usage_sus_consolidated",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_sus_consolidated.sql",
+    "alias": "usage_sus_consolidated",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_dt_flag",
+    "name": "usage_dt_flag",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_dt_flag.sql",
+    "alias": "usage_dt_flag",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_filter_sus_com",
+    "name": "usage_filter_sus_com",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_filter_sus_com.sql",
+    "alias": "usage_filter_sus_com",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_get_acct",
+    "name": "usage_get_acct",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_get_acct.sql",
+    "alias": "usage_get_acct",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_get_clic_auth",
+    "name": "usage_get_clic_auth",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "table",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_get_clic_auth.sql",
+    "alias": "usage_get_clic_auth",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_get_ents",
+    "name": "usage_get_ents",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "table",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_get_ents.sql",
+    "alias": "usage_get_ents",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_get_tp",
+    "name": "usage_get_tp",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_get_tp.sql",
+    "alias": "usage_get_tp",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_get_tp_subs",
+    "name": "usage_get_tp_subs",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_get_tp_subs.sql",
+    "alias": "usage_get_tp_subs",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_join_ent_clic",
+    "name": "usage_join_ent_clic",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_join_ent_clic.sql",
+    "alias": "usage_join_ent_clic",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_next_usage_dt",
+    "name": "usage_next_usage_dt",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "table",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_next_usage_dt.sql",
+    "alias": "usage_next_usage_dt",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_sus",
+    "name": "usage_sus",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_sus.sql",
+    "alias": "usage_sus",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_sus_daily_private",
+    "name": "usage_sus_daily_private",
+    "node_type": "model",
+    "database_name": "eio_publish",
+    "schema_name": "usage_private",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "publish/private/usage_sus_daily_private.sql",
+    "alias": "usage_sus_daily",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_publish.usage_private."
+  },
+  {
+    "id": "model.usage_single_user_subscription.usage_sus_daily",
+    "name": "usage_sus_daily",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "usage_single_user_subscription",
+    "path": "transform/usage_sus_daily.sql",
+    "alias": "usage_sus_daily",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "model.elementary.alerts_anomaly_detection",
+    "name": "alerts_anomaly_detection",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/alerts/alerts_anomaly_detection.sql",
+    "alias": "alerts_anomaly_detection",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.alerts_dbt_models",
+    "name": "alerts_dbt_models",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/alerts/alerts_dbt_models.sql",
+    "alias": "alerts_dbt_models",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.alerts_dbt_source_freshness",
+    "name": "alerts_dbt_source_freshness",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/alerts/alerts_dbt_source_freshness.sql",
+    "alias": "alerts_dbt_source_freshness",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.alerts_dbt_tests",
+    "name": "alerts_dbt_tests",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/alerts/alerts_dbt_tests.sql",
+    "alias": "alerts_dbt_tests",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.alerts_schema_changes",
+    "name": "alerts_schema_changes",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/alerts/alerts_schema_changes.sql",
+    "alias": "alerts_schema_changes",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.anomaly_threshold_sensitivity",
+    "name": "anomaly_threshold_sensitivity",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/data_monitoring/anomaly_detection/anomaly_threshold_sensitivity.sql",
+    "alias": "anomaly_threshold_sensitivity",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.metrics_anomaly_score",
+    "name": "metrics_anomaly_score",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "view",
+    "package_name": "elementary",
+    "path": "edr/data_monitoring/anomaly_detection/metrics_anomaly_score.sql",
+    "alias": "metrics_anomaly_score",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "model.elementary.data_monitoring_metrics",
+    "name": "data_monitoring_metrics",
+    "node_type": "model",
+    "database_name": "eio_ingest",
+    "schema_name": "elementary_log",
+    "table_name": null,
+    "materialization": "incremental",
+    "package_name": "elementary",
+    "path": "edr/data_monitoring/data_monitoring/data_monitoring_metrics.sql",
+    "alias": "data_monitoring_metrics",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "updated_at"
+    },
+    "generated_at": "2025-08-06 13:00:41",
+    "full_name": "eio_ingest.elementary_log."
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_subscription_id_not_null.9fb94f3af8",
+    "name": "product_usage_subscription_id_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "subscription_id",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_subscription_id_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_dt_not_null.82ee34970f",
+    "name": "product_usage_dt_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "dt",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_dt_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_source_not_null.24b0d10b58",
+    "name": "product_usage_source_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "source",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_source_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_source_accepted_values.a3c3469a1a",
+    "name": "product_usage_source_accepted_values",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "values": [
+        "clic_auth"
+      ],
+      "column_name": "source",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_source_accepted_values.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_child_account_csn_level_dirty_team_flag_not_null.ceb0a4970f",
+    "name": "product_usage_child_account_csn_level_dirty_team_flag_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "child_account_csn_level_dirty_team_flag",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_child_account_csn_level_dirty_team_flag_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_parent_account_csn_level_dirty_team_flag_not_null.42803dac67",
+    "name": "product_usage_parent_account_csn_level_dirty_team_flag_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "parent_account_csn_level_dirty_team_flag",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_parent_account_csn_level_dirty_team_flag_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_offering_plc_not_null.c26ac23981",
+    "name": "product_usage_offering_plc_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "offering_product_line_code",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_offering_plc_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_subscription_src_not_null.0e628dff2c",
+    "name": "product_usage_subscription_src_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "subscription_src",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_subscription_src_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_subscription_src_accepted_values.e08f0f7ec9",
+    "name": "product_usage_subscription_src_accepted_values",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "values": [
+        "aum_subscription",
+        "clic_subscription"
+      ],
+      "column_name": "subscription_src",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_subscription_src_accepted_values.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_child_account_csn_level_dirty_team_flag_accepted_values",
+    "name": "product_usage_child_account_csn_level_dirty_team_flag_accepted_values",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "post_transform_validation/product_usage_child_account_csn_level_dirty_team_flag_accepted_values.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "Either 1 or 0. Where 1 indicates that the child account CSN shares a \n        team and pool with another child account CSN."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_oxygen_id_not_null.76d25563d6",
+    "name": "product_usage_oxygen_id_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "oxygen_id",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_oxygen_id_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_usage_date_not_null.cd4c40ee16",
+    "name": "product_usage_usage_date_not_null",
+    "node_type": "test",
+    "test_type": "generic",
+    "test_params": {
+      "column_name": "usage_date",
+      "model": "{{ get_where_subquery(ref('usage_sus_daily')) }}"
+    },
+    "package_name": "usage_single_user_subscription",
+    "path": "product_usage_usage_date_not_null.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "This test validates that there are no `null` values present in a column."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.usage_authorization_clic_source_freshness",
+    "name": "usage_authorization_clic_source_freshness",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "pre_source_validation/usage_authorization_clic_source_freshness.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.usage_sus_record_count_check",
+    "name": "usage_sus_record_count_check",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "post_transform_validation/usage_sus_record_count_check.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "Checks for record count increase. Comparing against last week count",
+      "team_owner": "EDA EAX Data Engineering Team",
+      "team_comm_channel": "eda.eax.de@autodesk.com",
+      "remarks": "We have kept the threshold as 10 percentage. It may be a genunice decrease or increase.\n                        Please validate and bypass the test if needed or contact upstream EDM Team"
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.usage_sus_pool_id_check",
+    "name": "usage_sus_pool_id_check",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "post_transform_validation/usage_sus_pool_id_check.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "Checks for pool_id count increase. Comparing against defined threshold",
+      "team_owner": "EDA EAX Data Engineering Team",
+      "team_comm_channel": "eda.eax.de@autodesk.com",
+      "remarks": "Checking the distinct count of Pool ids. The range is determined based on the historical trend\n                        Please validate and bypass the test if needed or contact upstream EDM Team"
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.usage_sus_daily_primary_key_test",
+    "name": "usage_sus_daily_primary_key_test",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "post_transform_validation/usage_sus_daily_primary_key_test.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "test.usage_single_user_subscription.product_usage_parent_account_csn_level_dirty_team_flag_accepted_values",
+    "name": "product_usage_parent_account_csn_level_dirty_team_flag_accepted_values",
+    "node_type": "test",
+    "test_type": "singular",
+    "test_params": {},
+    "package_name": "usage_single_user_subscription",
+    "path": "post_transform_validation/product_usage_parent_account_csn_level_dirty_team_flag_accepted_values.sql",
+    "tags": [
+      "usage",
+      "usage_single_user_subscription"
+    ],
+    "meta": {
+      "description": "Either 1 or 0. Where 1 indicates that the parent account CSN shares a \n        team and pool with another parent account CSN."
+    },
+    "generated_at": "2025-08-06 13:00:45"
+  },
+  {
+    "id": "source.usage_single_user_subscription.license_authorization_usage_public.authorization_clic",
+    "name": "authorization_clic",
+    "node_type": "source",
+    "source_name": "license_authorization_usage_public",
+    "database_name": "adp_publish",
+    "schema_name": "license_authorization_usage_public",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "adp_publish.license_authorization_usage_public."
+  },
+  {
+    "id": "source.usage_single_user_subscription.entitlement_public.entitlement_edp",
+    "name": "entitlement_edp",
+    "node_type": "source",
+    "source_name": "entitlement_public",
+    "database_name": "adp_publish",
+    "schema_name": "entitlement_public",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "adp_publish.entitlement_public."
+  },
+  {
+    "id": "source.usage_single_user_subscription.entitlement_public.subscription_aum",
+    "name": "subscription_aum",
+    "node_type": "source",
+    "source_name": "entitlement_public",
+    "database_name": "adp_publish",
+    "schema_name": "entitlement_public",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "adp_publish.entitlement_public."
+  },
+  {
+    "id": "source.usage_single_user_subscription.account_optimized.transactional_csn_mapping_optimized",
+    "name": "transactional_csn_mapping_optimized",
+    "node_type": "source",
+    "source_name": "account_optimized",
+    "database_name": "adp_publish",
+    "schema_name": "account_optimized",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "adp_publish.account_optimized."
+  },
+  {
+    "id": "source.usage_single_user_subscription.account_optimized.account_edp_optimized",
+    "name": "account_edp_optimized",
+    "node_type": "source",
+    "source_name": "account_optimized",
+    "database_name": "adp_publish",
+    "schema_name": "account_optimized",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "adp_publish.account_optimized."
+  },
+  {
+    "id": "source.usage_single_user_subscription.edm_public.victim_survivor_mapping",
+    "name": "victim_survivor_mapping",
+    "node_type": "source",
+    "source_name": "edm_public",
+    "database_name": "edm_publish",
+    "schema_name": "edm_public",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "edm_publish.edm_public."
+  },
+  {
+    "id": "source.usage_single_user_subscription.usage_transform.usage_dt_flag_historical_optimized",
+    "name": "usage_dt_flag_historical_optimized",
+    "node_type": "source",
+    "source_name": "usage_transform",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "eio_ingest.usage_transform."
+  },
+  {
+    "id": "source.usage_single_user_subscription.usage_transform.usage_sus",
+    "name": "usage_sus",
+    "node_type": "source",
+    "source_name": "usage_transform",
+    "database_name": "eio_ingest",
+    "schema_name": "usage_transform",
+    "table_name": null,
+    "tags": [],
+    "meta": {},
+    "generated_at": "2025-08-06 13:00:49",
+    "full_name": "eio_ingest.usage_transform."
+  }
+]
