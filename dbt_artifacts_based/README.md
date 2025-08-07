@@ -9,6 +9,7 @@ This project consists of these main components:
 2. **Impact Analysis App** (`impact_analysis_app.py`) - Interactive Streamlit app using streamlit-agraph
 3. **Plotly Impact Analysis App** (`impact_analysis_app_plotly.py`) - **Snowflake Streamlit compatible** version using Plotly
 4. **GraphViz Impact Analysis App** (`impact_analysis_app_graphviz.py`) - **Professional layouts** using PyGraphviz
+5. **Cytoscape Impact Analysis App** (`impact_analysis_app_cytoscape.py`) - **Interactive & Snowflake compatible** using st-link-analysis
 
 ## 📊 Data Flow Architecture
 
@@ -116,6 +117,12 @@ streamlit run impact_analysis_app_plotly.py
 ```bash
 # For high-quality static graph rendering with professional layouts
 streamlit run impact_analysis_app_graphviz.py
+```
+
+#### Option D: Interactive Snowflake Version (Cytoscape)
+```bash
+# For interactive graphs compatible with Snowflake Streamlit
+streamlit run impact_analysis_app_cytoscape.py
 ```
 
 ### 3. Access the Application
@@ -254,6 +261,13 @@ After: 1 consolidated node
 - **pandas** - Data manipulation and analysis
 - **plotly** - Interactive charts for analysis tables
 - **pygraphviz** - Professional graph layout and rendering
+
+#### Cytoscape Version (`impact_analysis_app_cytoscape.py`)
+- **streamlit** - Web application framework
+- **networkx** - Graph data structure and algorithms
+- **pandas** - Data manipulation and analysis
+- **plotly** - Interactive charts for analysis tables
+- **st-link-analysis** - Interactive Cytoscape.js graph visualization
 
 ### Performance Features
 - **Caching**: Streamlit cache for graph loading

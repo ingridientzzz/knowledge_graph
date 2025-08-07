@@ -1,6 +1,6 @@
 # Impact Analysis App Version Comparison
 
-## 📊 Three Versions Available
+## 📊 Four Versions Available
 
 ### `impact_analysis_app.py` - Standard Version
 **Best for**: Local development, environments with custom Streamlit components
@@ -55,23 +55,42 @@ networkx>=2.8.0
 pygraphviz>=1.9
 ```
 
+### `impact_analysis_app_cytoscape.py` - Interactive Snowflake Version
+**Best for**: Interactive graphs in Snowflake Streamlit, professional interactivity
+
+**Visualization**: st-link-analysis (Cytoscape.js-based interactive visualization)
+- Professional interactive graph layouts
+- Multiple layout algorithms (dagre, fcose, cola, etc.)
+- Full node/edge manipulation and interaction
+- Snowflake Streamlit compatible
+
+**Requirements**:
+```txt
+streamlit>=1.28.0
+plotly>=5.15.0
+pandas>=1.5.0
+networkx>=2.8.0
+st-link-analysis>=0.4.0
+```
+
 ## 🔄 Feature Comparison
 
-| Feature | Standard Version | Plotly Version | GraphViz Version | Notes |
-|---------|------------------|----------------|------------------|-------|
-| **Node Visualization** | ✅ Custom shapes | ✅ Plotly symbols | ✅ Professional shapes | All support type-based styling |
-| **Interactive Pan/Zoom** | ✅ Full support | ✅ Full support | ❌ Static image | GraphViz creates static PNG |
-| **Hover Tooltips** | ✅ HTML tooltips | ✅ Text tooltips | ❌ No tooltips | GraphViz is static |
-| **Node Consolidation** | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | Identical logic |
-| **Impact Analysis** | ✅ Complete | ✅ Complete | ✅ Complete | Identical analysis features |
-| **Risk Assessment** | ✅ Complete | ✅ Complete | ✅ Complete | Same risk calculation |
-| **Package Charts** | ✅ Plotly pie charts | ✅ Plotly pie charts | ✅ Plotly pie charts | Identical |
-| **Data Tables** | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | Identical |
-| **Critical Nodes** | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | Identical |
-| **Layout Algorithms** | ⚡ Physics only | ⚡ Spring only | ✅ 6 algorithms | GraphViz has most options |
-| **Graph Quality** | ⚡ Good | ⚡ Good | ✅ Excellent | GraphViz professional quality |
-| **Download/Export** | ❌ No export | ❌ No export | ✅ PNG download | GraphViz exports images |
-| **Performance** | ⚡ Good | ✅ Better | ✅ Fast rendering | All perform well |
+| Feature | Standard Version | Plotly Version | GraphViz Version | Cytoscape Version | Notes |
+|---------|------------------|----------------|------------------|-------------------|-------|
+| **Node Visualization** | ✅ Custom shapes | ✅ Plotly symbols | ✅ Professional shapes | ✅ Cytoscape shapes | All support type-based styling |
+| **Interactive Pan/Zoom** | ✅ Full support | ✅ Full support | ❌ Static image | ✅ Full support | Cytoscape & Standard most interactive |
+| **Hover Tooltips** | ✅ HTML tooltips | ✅ Text tooltips | ❌ No tooltips | ✅ Interactive tooltips | Cytoscape similar to Standard |
+| **Node Consolidation** | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | Identical logic |
+| **Impact Analysis** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Identical analysis features |
+| **Risk Assessment** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Same risk calculation |
+| **Package Charts** | ✅ Plotly pie charts | ✅ Plotly pie charts | ✅ Plotly pie charts | ✅ Plotly pie charts | Identical |
+| **Data Tables** | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | Identical |
+| **Critical Nodes** | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | Identical |
+| **Layout Algorithms** | ⚡ Physics only | ⚡ Spring only | ✅ 6 algorithms | ✅ 9 algorithms | Cytoscape has most options |
+| **Graph Quality** | ⚡ Good | ⚡ Good | ✅ Excellent | ✅ Excellent | GraphViz & Cytoscape best |
+| **Download/Export** | ❌ No export | ❌ No export | ✅ PNG download | ⚡ JSON export | GraphViz for images, Cytoscape for data |
+| **Snowflake Compat** | ❌ Not supported | ✅ Compatible | ❓ Unknown | ✅ Compatible | Cytoscape & Plotly work in Snowflake |
+| **Performance** | ⚡ Good | ✅ Better | ✅ Fast rendering | ✅ Excellent | Cytoscape optimized for large graphs |
 
 ## 🎯 Choosing the Right Version
 
@@ -93,6 +112,13 @@ pygraphviz>=1.9
 - ✅ Need to export/download visualizations
 - ✅ Creating documentation or presentations
 - ✅ Prefer static over interactive graphs
+
+### Use Cytoscape Version When:
+- ✅ **Need interactive graphs in Snowflake Streamlit**
+- ✅ Want professional interactive visualization
+- ✅ Need multiple layout algorithm options
+- ✅ Want node/edge manipulation capabilities
+- ✅ **Best of both worlds: Interactive + Snowflake compatible**
 
 ## 🚀 Quick Start Guide
 
@@ -119,6 +145,13 @@ pip install -r requirements_graphviz.txt
 streamlit run impact_analysis_app_graphviz.py
 ```
 
+### For Interactive Snowflake Graphs:
+```bash
+# Install cytoscape requirements
+pip install -r requirements_cytoscape.txt
+streamlit run impact_analysis_app_cytoscape.py
+```
+
 ## 📋 Migration Notes
 
 ### Code Structure
@@ -134,6 +167,7 @@ Only the visualization rendering differs:
 - Standard: `streamlit_agraph.agraph(nodes, edges, config)`
 - Plotly: `st.plotly_chart(plotly_figure)`
 - GraphViz: `st.image(base64_encoded_png)`
+- Cytoscape: `st_link_analysis(elements=elements, layout=layout)`
 
 ### Data Compatibility
 - ✅ All use same data files
@@ -147,25 +181,36 @@ Only the visualization rendering differs:
 - **Standard**: Vis.js force-directed physics (more dynamic)
 - **Plotly**: NetworkX spring layout (more stable)
 - **GraphViz**: 6 professional algorithms (dot, neato, fdp, sfdp, circo, twopi)
+- **Cytoscape**: 9 interactive algorithms (dagre, fcose, cola, breadthfirst, circle, etc.)
 
 ### Node Appearance
 - **Standard**: Custom shapes (diamond, triangle, etc.)
 - **Plotly**: Plotly symbols (similar but standardized)
 - **GraphViz**: Professional shapes (diamond, ellipse, box, etc.)
+- **Cytoscape**: Professional interactive shapes (diamond, rectangle, ellipse, etc.)
 
 ### Interactivity
 - **Standard**: Physics-based node dragging
 - **Plotly**: Static layout with zoom/pan
 - **GraphViz**: Static image (no interaction)
+- **Cytoscape**: Full node manipulation, dragging, context menus
 
 ### Performance
 - **Standard**: Good for <100 nodes
 - **Plotly**: Better for 100+ nodes
 - **GraphViz**: Excellent for any size (static rendering)
+- **Cytoscape**: Excellent for large graphs (optimized interactive rendering)
 
 ### Output Quality
 - **Standard**: Good interactive quality
-- **Plotly**: Good interactive quality
+- **Plotly**: Good interactive quality  
 - **GraphViz**: Excellent publication quality
+- **Cytoscape**: Excellent interactive quality
 
-All three versions provide comprehensive analysis capabilities with different visualization strengths!
+### Snowflake Compatibility
+- **Standard**: ❌ Not supported (custom component)
+- **Plotly**: ✅ Fully supported (native Plotly)
+- **GraphViz**: ❓ Unknown (depends on external dependencies)
+- **Cytoscape**: ✅ Supported (as of August 2025 custom components update)
+
+All four versions provide comprehensive analysis capabilities with different visualization strengths!
