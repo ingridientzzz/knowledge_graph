@@ -210,7 +210,7 @@ After: 1 consolidated node
 ```
 
 ### Visual Optimization
-- **Node sizes**: Selected (25px), Connected (18px), Others (15px)
+- **Node sizes**: Selected (16px), Connected (12px), Others (10px)
 - **Edge widths**: Key connections (3px), Related (2px), Others (1px)
 - **Canvas**: Large 2000×1400px for readability
 - **Labels**: Truncated at 20 characters with ellipsis

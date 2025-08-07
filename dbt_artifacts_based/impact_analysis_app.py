@@ -318,16 +318,16 @@ def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGrap
         # Determine node color and size based on impact
         if selected_node in node_info['original_ids']:
             color = NODE_TYPE_COLORS['selected']
-            size = 25  # Much larger for selected node - improved readability
+            size = 16  # Selected node - moderately larger
         elif any(node_id in upstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['upstream']
-            size = 18  # Larger for better visibility
+            size = 12  # Connected nodes - medium size
         elif any(node_id in downstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['downstream']
-            size = 18  # Larger for better visibility
+            size = 12  # Connected nodes - medium size
         else:
             color = NODE_TYPE_COLORS.get(node_type, NODE_TYPE_COLORS['unknown'])
-            size = 15  # Larger base size for readability
+            size = 10  # Other nodes - small size
         
         # Simple tooltip showing just the ID
         if node_info['is_consolidated']:
@@ -1024,11 +1024,7 @@ def main():
     # Sidebar
     st.sidebar.title("Impact Analysis Configuration")
     
-    # Add cache refresh option for KeyError issues
-    if st.sidebar.button("🔄 Refresh Data", help="Clear cache and reload if experiencing KeyErrors"):
-        st.cache_data.clear()
-        st.rerun()
-    
+
     # Display metadata
     if metadata:
         st.sidebar.subheader("📊 Graph Statistics")
