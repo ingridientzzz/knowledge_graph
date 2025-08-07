@@ -128,13 +128,47 @@ def load_metadata() -> Optional[Dict]:
 
 def get_nodes_by_type(graph: nx.MultiDiGraph, node_type: str) -> List[Tuple[str, str]]:
     """Get list of nodes of a specific type."""
+    if node_type == 'source':
+        return _get_deduplicated_sources(graph)
+    
     nodes = []
     for node_id, attrs in graph.nodes(data=True):
         if attrs.get('node_type') == node_type:
-            name = attrs.get('name', node_id)
-            nodes.append((node_id, name))
+            base_name = attrs.get('name', node_id)
+            package_name = attrs.get('package_name', '')
+            
+            # For tests that might have duplicates across packages,
+            # include package name in display name for clarity
+            if package_name and node_type == 'test':
+                display_name = f"{base_name} ({package_name})"
+            else:
+                display_name = base_name
+                
+            nodes.append((node_id, display_name))
     
     return sorted(nodes, key=lambda x: x[1])
+
+def _get_deduplicated_sources(graph: nx.MultiDiGraph) -> List[Tuple[str, str]]:
+    """Get deduplicated sources - one entry per unique source name."""
+    source_groups = {}
+    
+    # Group source nodes by their actual source name
+    for node_id, attrs in graph.nodes(data=True):
+        if attrs.get('node_type') == 'source':
+            source_name = attrs.get('name', node_id)
+            
+            if source_name not in source_groups:
+                source_groups[source_name] = []
+            source_groups[source_name].append(node_id)
+    
+    # Return one representative per source name (we'll handle the aggregation in impact analysis)
+    deduplicated_sources = []
+    for source_name, node_ids in source_groups.items():
+        # Use the first node_id as representative, but store all node_ids for later use
+        representative_id = node_ids[0]
+        deduplicated_sources.append((representative_id, source_name))
+    
+    return sorted(deduplicated_sources, key=lambda x: x[1])
 
 def get_upstream_nodes(graph: nx.MultiDiGraph, node_id: str, depth: Optional[int] = None) -> Set[str]:
     """Get upstream dependencies of a node."""
@@ -167,6 +201,12 @@ def create_impact_subgraph(graph: nx.MultiDiGraph, selected_node: str,
                           include_tests: bool = True, include_columns: bool = False,
                           include_packages: bool = False) -> Tuple[nx.MultiDiGraph, Set[str], Set[str]]:
     """Create a subgraph showing the impact of the selected node."""
+    
+    # For sources, aggregate impact from all nodes with the same source name
+    if graph.nodes[selected_node].get('node_type') == 'source':
+        return _create_aggregated_source_impact(graph, selected_node, upstream_depth, downstream_depth,
+                                              include_tests, include_columns, include_packages)
+    
     upstream_nodes = get_upstream_nodes(graph, selected_node, upstream_depth)
     downstream_nodes = get_downstream_nodes(graph, selected_node, downstream_depth)
     
@@ -197,45 +237,111 @@ def create_impact_subgraph(graph: nx.MultiDiGraph, selected_node: str,
     
     return subgraph, upstream_nodes, downstream_nodes
 
+def _create_aggregated_source_impact(graph: nx.MultiDiGraph, selected_node: str,
+                                   upstream_depth: Optional[int], downstream_depth: Optional[int],
+                                   include_tests: bool, include_columns: bool, include_packages: bool) -> Tuple[nx.MultiDiGraph, Set[str], Set[str]]:
+    """Create impact analysis for a source by aggregating all source nodes with the same name."""
+    
+    # Get the source name from the selected node
+    selected_source_name = graph.nodes[selected_node].get('name', '')
+    
+    # Find all source nodes with the same name across different packages
+    all_related_sources = []
+    for node_id, attrs in graph.nodes(data=True):
+        if (attrs.get('node_type') == 'source' and 
+            attrs.get('name', '') == selected_source_name):
+            all_related_sources.append(node_id)
+    
+    # Aggregate upstream and downstream from all related sources
+    all_upstream = set()
+    all_downstream = set()
+    
+    for source_node in all_related_sources:
+        upstream = get_upstream_nodes(graph, source_node, upstream_depth)
+        downstream = get_downstream_nodes(graph, source_node, downstream_depth)
+        all_upstream.update(upstream)
+        all_downstream.update(downstream)
+    
+    # Create node set including all related sources
+    nodes_to_include = set(all_related_sources) | all_upstream | all_downstream
+    
+    # Filter based on options
+    if not include_tests:
+        nodes_to_include = {
+            node_id for node_id in nodes_to_include
+            if graph.nodes[node_id].get('node_type') != 'test'
+        }
+    
+    if not include_columns:
+        nodes_to_include = {
+            node_id for node_id in nodes_to_include
+            if graph.nodes[node_id].get('node_type') != 'column'
+        }
+    
+    if not include_packages:
+        nodes_to_include = {
+            node_id for node_id in nodes_to_include
+            if graph.nodes[node_id].get('node_type') != 'package'
+        }
+    
+    # Create subgraph
+    subgraph = graph.subgraph(nodes_to_include)
+    
+    return subgraph, all_upstream, all_downstream
+
 def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGraph, 
                                selected_node: str, upstream_nodes: Set[str], 
                                downstream_nodes: Set[str]) -> Tuple[List[Node], List[Edge], Config]:
-    """Create interactive visualization of the impact graph."""
+    """Create interactive visualization of the impact graph with consolidated sources."""
+    
+    # First, consolidate source nodes with the same name
+    consolidated_nodes, node_mapping = _consolidate_source_nodes_for_viz(graph, subgraph, selected_node)
+    
     nodes = []
     edges = []
     
-    # Create nodes
-    for node_id, attrs in subgraph.nodes(data=True):
-        node_type = attrs.get('node_type', 'unknown')
-        name = attrs.get('name', node_id)
+    # Create consolidated nodes
+    for consolidated_id, node_info in consolidated_nodes.items():
+        node_type = node_info['node_type']
+        name = node_info['name']
         
         # Determine node color and size based on impact
-        if node_id == selected_node:
+        if selected_node in node_info['original_ids']:
             color = NODE_TYPE_COLORS['selected']
-            size = 30
-        elif node_id in upstream_nodes:
+            size = 40  # Larger for consolidated selected node
+        elif any(node_id in upstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['upstream']
-            size = 20
-        elif node_id in downstream_nodes:
+            size = 25
+        elif any(node_id in downstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['downstream']
-            size = 20
+            size = 25
         else:
             color = NODE_TYPE_COLORS.get(node_type, NODE_TYPE_COLORS['unknown'])
-            size = 15
+            size = 20
         
-        # Create tooltip
-        tooltip = f"<b>{name}</b><br>Type: {node_type}<br>ID: {node_id}"
-        if 'description' in attrs and attrs['description']:
-            desc = attrs['description'][:100] + "..." if len(attrs['description']) > 100 else attrs['description']
-            tooltip += f"<br>Description: {desc}"
-        if 'package_name' in attrs:
-            tooltip += f"<br>Package: {attrs['package_name']}"
+        # Create enhanced tooltip for consolidated sources
+        if node_info['is_consolidated']:
+            packages = node_info['packages']
+            tooltip = f"<b>{name}</b><br>Type: {node_type}<br>Consolidated from {len(node_info['original_ids'])} packages:<br>"
+            tooltip += "<br>".join([f"• {pkg}" for pkg in sorted(packages)[:5]])
+            if len(packages) > 5:
+                tooltip += f"<br>... and {len(packages) - 5} more"
+        else:
+            # Single node tooltip
+            original_id = node_info['original_ids'][0]
+            attrs = graph.nodes[original_id]
+            tooltip = f"<b>{name}</b><br>Type: {node_type}<br>ID: {original_id}"
+            if 'description' in attrs and attrs['description']:
+                desc = attrs['description'][:100] + "..." if len(attrs['description']) > 100 else attrs['description']
+                tooltip += f"<br>Description: {desc}"
+            if 'package_name' in attrs:
+                tooltip += f"<br>Package: {attrs['package_name']}"
         
         # Get shape
         shape = NODE_TYPE_SHAPES.get(node_type, "dot")
         
         nodes.append(Node(
-            id=node_id,
+            id=consolidated_id,
             label=name,
             size=size,
             color=color,
@@ -243,33 +349,8 @@ def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGrap
             title=tooltip
         ))
     
-    # Create edges
-    for source, target, attrs in subgraph.edges(data=True):
-        edge_type = attrs.get('edge_type', 'related')
-        
-        # Determine edge styling based on impact
-        if source == selected_node or target == selected_node:
-            color = "#ff0000"
-            width = 3
-        elif source in upstream_nodes and target == selected_node:
-            color = NODE_TYPE_COLORS['upstream']
-            width = 2
-        elif source == selected_node and target in downstream_nodes:
-            color = NODE_TYPE_COLORS['downstream']
-            width = 2
-        else:
-            color = "#666666"
-            width = 1
-        
-        edges.append(Edge(
-            source=source,
-            target=target,
-            label=edge_type,
-            title=f"Relationship: {edge_type}",
-            color=color,
-            width=width,
-            type="CURVE_SMOOTH"
-        ))
+    # Create consolidated edges
+    edges = _create_consolidated_edges(subgraph, node_mapping, consolidated_nodes, selected_node, upstream_nodes, downstream_nodes)
     
     # Configuration
     config = Config(
@@ -283,6 +364,107 @@ def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGrap
     )
     
     return nodes, edges, config
+
+def _consolidate_source_nodes_for_viz(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGraph, 
+                                     selected_node: str) -> Tuple[Dict[str, Dict], Dict[str, str]]:
+    """Consolidate source nodes with the same name for visualization."""
+    
+    # Group nodes by (node_type, name) for sources, keep others as-is
+    node_groups = {}
+    node_mapping = {}  # original_id -> consolidated_id
+    
+    for node_id, attrs in subgraph.nodes(data=True):
+        node_type = attrs.get('node_type', 'unknown')
+        name = attrs.get('name', node_id)
+        
+        if node_type == 'source':
+            # Group sources by name
+            group_key = f"source_{name}"
+            
+            if group_key not in node_groups:
+                node_groups[group_key] = {
+                    'name': name,
+                    'node_type': node_type,
+                    'original_ids': [],
+                    'packages': set(),
+                    'is_consolidated': False
+                }
+            
+            node_groups[group_key]['original_ids'].append(node_id)
+            if attrs.get('package_name'):
+                node_groups[group_key]['packages'].add(attrs['package_name'])
+            
+            node_mapping[node_id] = group_key
+        else:
+            # Keep non-source nodes as individual nodes
+            group_key = node_id
+            node_groups[group_key] = {
+                'name': name,
+                'node_type': node_type,
+                'original_ids': [node_id],
+                'packages': {attrs.get('package_name', 'unknown')} if attrs.get('package_name') else set(),
+                'is_consolidated': False
+            }
+            node_mapping[node_id] = group_key
+    
+    # Mark consolidated source groups
+    for group_key, group_info in node_groups.items():
+        if group_info['node_type'] == 'source' and len(group_info['original_ids']) > 1:
+            group_info['is_consolidated'] = True
+    
+    return node_groups, node_mapping
+
+def _create_consolidated_edges(subgraph: nx.MultiDiGraph, node_mapping: Dict[str, str], 
+                             consolidated_nodes: Dict[str, Dict], selected_node: str,
+                             upstream_nodes: Set[str], downstream_nodes: Set[str]) -> List[Edge]:
+    """Create edges for the consolidated visualization."""
+    
+    edges = []
+    edge_set = set()  # To avoid duplicate edges
+    
+    for source, target, attrs in subgraph.edges(data=True):
+        consolidated_source = node_mapping[source]
+        consolidated_target = node_mapping[target]
+        
+        # Skip self-loops that might occur from consolidation
+        if consolidated_source == consolidated_target:
+            continue
+        
+        # Create unique edge identifier
+        edge_key = (consolidated_source, consolidated_target)
+        if edge_key in edge_set:
+            continue
+        edge_set.add(edge_key)
+        
+        edge_type = attrs.get('edge_type', 'related')
+        
+        # Determine edge styling based on impact
+        source_is_selected = selected_node in consolidated_nodes[consolidated_source]['original_ids']
+        target_is_selected = selected_node in consolidated_nodes[consolidated_target]['original_ids']
+        source_is_upstream = any(node_id in upstream_nodes for node_id in consolidated_nodes[consolidated_source]['original_ids'])
+        target_is_downstream = any(node_id in downstream_nodes for node_id in consolidated_nodes[consolidated_target]['original_ids'])
+        
+        if source_is_selected or target_is_selected:
+            color = "#ff0000"
+            width = 4
+        elif source_is_upstream or target_is_downstream:
+            color = NODE_TYPE_COLORS.get('upstream', '#ff9900')
+            width = 2
+        else:
+            color = "#666666"
+            width = 1
+        
+        edges.append(Edge(
+            source=consolidated_source,
+            target=consolidated_target,
+            label=edge_type,
+            title=f"Relationship: {edge_type}",
+            color=color,
+            width=width,
+            type="CURVE_SMOOTH"
+        ))
+    
+    return edges
 
 def calculate_impact_metrics(graph: nx.MultiDiGraph, selected_node: str, 
                            upstream_nodes: Set[str], downstream_nodes: Set[str]) -> Dict[str, Any]:
@@ -367,8 +549,13 @@ def calculate_impact_metrics(graph: nx.MultiDiGraph, selected_node: str,
     
     return metrics
 
-def _create_node_data(graph: nx.MultiDiGraph, node_ids: Set[str]) -> List[Dict]:
+def _create_node_data(graph: nx.MultiDiGraph, node_ids: Set[str], 
+                     selected_node_type: str = None, aggregate_by_type: bool = False) -> List[Dict]:
     """Helper function to create node data for impact tables."""
+    
+    if aggregate_by_type:
+        return _create_aggregated_node_data(graph, node_ids, selected_node_type)
+    
     data = []
     for node_id in node_ids:
         attrs = graph.nodes[node_id]
@@ -393,16 +580,389 @@ def _create_node_data(graph: nx.MultiDiGraph, node_ids: Set[str]) -> List[Dict]:
         data.append(row)
     return data
 
+def _create_aggregated_node_data(graph: nx.MultiDiGraph, node_ids: Set[str], 
+                               selected_node_type: str = None) -> List[Dict]:
+    """Create aggregated node data grouped by meaningful categories."""
+    
+    # Group nodes by type and package
+    groups = {}
+    
+    for node_id in node_ids:
+        attrs = graph.nodes[node_id]
+        node_type = attrs.get('node_type', 'unknown')
+        package = attrs.get('package_name', 'unknown')
+        
+        # Skip columns for source analysis to reduce noise
+        if selected_node_type == 'source' and node_type == 'column':
+            continue
+            
+        group_key = (node_type, package)
+        
+        if group_key not in groups:
+            groups[group_key] = {
+                'nodes': [],
+                'names': set(),
+                'descriptions': set()
+            }
+        
+        groups[group_key]['nodes'].append(node_id)
+        groups[group_key]['names'].add(attrs.get('name', node_id))
+        if attrs.get('description'):
+            groups[group_key]['descriptions'].add(attrs.get('description', ''))
+    
+    # Create aggregated rows
+    data = []
+    for (node_type, package), group_info in groups.items():
+        node_count = len(group_info['nodes'])
+        
+        # Create representative name
+        if node_count == 1:
+            name = list(group_info['names'])[0]
+        else:
+            name = f"{node_count} {node_type}{'s' if node_count > 1 else ''}"
+        
+        # Combine descriptions
+        combined_desc = " | ".join(list(group_info['descriptions'])[:3])
+        if len(combined_desc) > 100:
+            combined_desc = combined_desc[:97] + "..."
+        
+        row = {
+            'name': name,
+            'type': node_type,
+            'dbt_project': package,
+            'description': combined_desc,
+            'count': node_count,
+            'node_ids': group_info['nodes']  # Keep reference to individual nodes
+        }
+        
+        data.append(row)
+    
+    # Sort by package, then by type, then by count (descending)
+    data.sort(key=lambda x: (x['dbt_project'], x['type'], -x['count']))
+    
+    return data
+
 def create_impact_tables(graph: nx.MultiDiGraph, upstream_nodes: Set[str], 
-                        downstream_nodes: Set[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                        downstream_nodes: Set[str], selected_node_type: str = None, 
+                        aggregate_view: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create detailed tables of impacted nodes."""
-    upstream_data = _create_node_data(graph, upstream_nodes)
-    downstream_data = _create_node_data(graph, downstream_nodes)
+    upstream_data = _create_node_data(graph, upstream_nodes, selected_node_type, aggregate_view)
+    downstream_data = _create_node_data(graph, downstream_nodes, selected_node_type, aggregate_view)
     
     upstream_df = pd.DataFrame(upstream_data)
     downstream_df = pd.DataFrame(downstream_data)
     
     return upstream_df, downstream_df
+
+def _create_critical_nodes_treemap(graph: nx.MultiDiGraph, critical_nodes: List[Tuple[str, int, str]], 
+                                   downstream_nodes: Set[str]) -> None:
+    """Create an interactive treemap visualization for critical nodes drill-down."""
+    
+    # Initialize session state for treemap navigation
+    if 'treemap_path' not in st.session_state:
+        st.session_state.treemap_path = []
+    if 'treemap_selected_node' not in st.session_state:
+        st.session_state.treemap_selected_node = None
+    
+    # Navigation controls
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        # Breadcrumb navigation
+        if st.session_state.treemap_path:
+            breadcrumb = " → ".join(['Critical Nodes'] + st.session_state.treemap_path)
+            st.write(f"📍 **Path:** {breadcrumb}")
+        else:
+            st.write("📍 **View:** Critical Nodes Overview")
+    
+    with col2:
+        if st.button("🔙 Back", disabled=len(st.session_state.treemap_path) == 0):
+            if st.session_state.treemap_path:
+                st.session_state.treemap_path.pop()
+                st.session_state.treemap_selected_node = None
+                st.rerun()
+    
+    with col3:
+        if st.button("🏠 Reset to Overview"):
+            st.session_state.treemap_path = []
+            st.session_state.treemap_selected_node = None
+            st.rerun()
+    
+    # Determine what level we're viewing
+    if len(st.session_state.treemap_path) == 0:
+        # Root level - show all critical nodes
+        _show_critical_nodes_overview_treemap(graph, critical_nodes, downstream_nodes)
+    elif len(st.session_state.treemap_path) == 1:
+        # Drill-down level - show dependencies of selected critical node
+        critical_node_name = st.session_state.treemap_path[0]
+        _show_critical_node_dependencies_treemap(graph, critical_node_name, downstream_nodes)
+    
+def _show_critical_nodes_overview_treemap(graph: nx.MultiDiGraph, critical_nodes: List[Tuple[str, int, str]], 
+                                         downstream_nodes: Set[str]) -> None:
+    """Show treemap overview of all critical nodes."""
+    
+    if not critical_nodes:
+        st.info("No critical nodes found")
+        return
+    
+    # Prepare data for treemap
+    treemap_data = []
+    
+    for name, downstream_count, node_type in critical_nodes:
+        # Find the actual node to get more details
+        critical_node_id = None
+        for node_id in downstream_nodes:
+            if graph.nodes[node_id].get('name', node_id) == name:
+                critical_node_id = node_id
+                break
+        
+        if critical_node_id:
+            node_attrs = graph.nodes[critical_node_id]
+            package_name = node_attrs.get('package_name', 'unknown')
+            
+            # Determine color based on risk level
+            if downstream_count > 20:
+                color = '#FF4B4B'  # Red - Very High Risk
+                risk = 'Very High Risk'
+            elif downstream_count > 15:
+                color = '#FF8C00'  # Orange - High Risk  
+                risk = 'High Risk'
+            else:
+                color = '#FFA500'  # Light Orange - Medium Risk
+                risk = 'Medium Risk'
+            
+            treemap_data.append({
+                'name': name,
+                'parent': '',
+                'value': downstream_count,
+                'color': color,
+                'type': node_type,
+                'package': package_name,
+                'risk': risk,
+                'dependencies': downstream_count,
+                'hover_text': f"{name}<br>Type: {node_type}<br>Package: {package_name}<br>Dependencies: {downstream_count}<br>Risk: {risk}"
+            })
+    
+    if treemap_data:
+        # Create treemap
+        fig = go.Figure(go.Treemap(
+            labels=[item['name'] for item in treemap_data],
+            parents=[item['parent'] for item in treemap_data],
+            values=[item['value'] for item in treemap_data],
+            text=[f"{item['name']}<br>{item['dependencies']} deps<br>{item['risk']}" for item in treemap_data],
+            textinfo="text",
+            hovertext=[item['hover_text'] for item in treemap_data],
+            hoverinfo="text",
+            marker=dict(
+                colors=[item['color'] for item in treemap_data],
+                line=dict(width=2, color='white')
+            ),
+            pathbar=dict(visible=False)
+        ))
+        
+        fig.update_layout(
+            title="🎯 Critical Nodes - Click to Drill Down<br><sub>Size = Dependency Count | Color = Risk Level</sub>",
+            font_size=12,
+            height=500,
+            margin=dict(t=80, l=0, r=0, b=0)
+        )
+        
+        # Display the treemap
+        st.plotly_chart(fig, use_container_width=True, key="critical_treemap_overview")
+        
+        # Add click buttons for navigation since plotly selection events are complex in Streamlit
+        st.write("**🖱️ Click to Drill Down:**")
+        cols = st.columns(min(4, len(treemap_data)))  # Max 4 columns
+        
+        for i, item in enumerate(treemap_data):
+            col_idx = i % 4
+            with cols[col_idx]:
+                if st.button(f"🎯 {item['name']}", key=f"drill_down_{i}", help=f"{item['dependencies']} dependencies - {item['risk']}"):
+                    st.session_state.treemap_path = [item['name']]
+                    st.session_state.treemap_selected_node = item['name']
+                    st.rerun()
+        
+        # Legend
+        st.write("""
+        **🎨 Legend:**
+        - 🔴 **Red**: Very High Risk (>20 dependencies)
+        - 🟠 **Orange**: High Risk (15-20 dependencies)  
+        - 🟡 **Light Orange**: Medium Risk (10-15 dependencies)
+        - **Size**: Proportional to number of dependencies
+        - **Click any node** to see its dependencies
+        """)
+
+def _show_critical_node_dependencies_treemap(graph: nx.MultiDiGraph, critical_node_name: str, 
+                                           downstream_nodes: Set[str]) -> None:
+    """Show treemap of dependencies for a specific critical node."""
+    
+    # Find the critical node
+    critical_node_id = None
+    for node_id in downstream_nodes:
+        if graph.nodes[node_id].get('name', node_id) == critical_node_name:
+            critical_node_id = node_id
+            break
+    
+    if not critical_node_id:
+        st.error(f"Could not find critical node: {critical_node_name}")
+        return
+    
+    # Get dependencies
+    deps = list(graph.successors(critical_node_id))
+    
+    if not deps:
+        st.info(f"No dependencies found for {critical_node_name}")
+        return
+    
+    # Group dependencies by package for hierarchical view
+    package_groups = {}
+    ungrouped_deps = []
+    
+    for dep_id in deps:
+        dep_attrs = graph.nodes[dep_id]
+        package = dep_attrs.get('package_name', 'unknown')
+        dep_name = dep_attrs.get('name', dep_id)
+        dep_type = dep_attrs.get('node_type', 'unknown')
+        
+        if package and package != 'unknown':
+            if package not in package_groups:
+                package_groups[package] = []
+            package_groups[package].append({
+                'id': dep_id,
+                'name': dep_name,
+                'type': dep_type,
+                'package': package
+            })
+        else:
+            ungrouped_deps.append({
+                'id': dep_id,
+                'name': dep_name,
+                'type': dep_type,
+                'package': 'Other'
+            })
+    
+    # Prepare treemap data
+    treemap_data = []
+    
+    # Add package groups
+    for package, deps_in_package in package_groups.items():
+        # Add package parent
+        treemap_data.append({
+            'name': package,
+            'parent': '',
+            'value': len(deps_in_package),
+            'is_package': True
+        })
+        
+        # Add individual dependencies
+        for dep in deps_in_package:
+            color = _get_node_type_color(dep['type'])
+            treemap_data.append({
+                'name': f"{dep['name']}",
+                'parent': package,
+                'value': 1,
+                'type': dep['type'],
+                'package': dep['package'],
+                'color': color,
+                'is_package': False,
+                'hover_text': f"{dep['name']}<br>Type: {dep['type']}<br>Package: {dep['package']}"
+            })
+    
+    # Add ungrouped dependencies
+    if ungrouped_deps:
+        treemap_data.append({
+            'name': 'Other',
+            'parent': '',
+            'value': len(ungrouped_deps),
+            'is_package': True
+        })
+        
+        for dep in ungrouped_deps:
+            color = _get_node_type_color(dep['type'])
+            treemap_data.append({
+                'name': f"{dep['name']}",
+                'parent': 'Other',
+                'value': 1,
+                'type': dep['type'],
+                'package': 'Other',
+                'color': color,
+                'is_package': False,
+                'hover_text': f"{dep['name']}<br>Type: {dep['type']}<br>Package: Other"
+            })
+    
+    if treemap_data:
+        # Create treemap
+        colors = []
+        for item in treemap_data:
+            if item.get('is_package', False):
+                colors.append('#E8E8E8')  # Light gray for packages
+            else:
+                colors.append(item.get('color', '#90EE90'))  # Node type colors
+        
+        fig = go.Figure(go.Treemap(
+            labels=[item['name'] for item in treemap_data],
+            parents=[item['parent'] for item in treemap_data],
+            values=[item['value'] for item in treemap_data],
+            text=[item['name'] for item in treemap_data],
+            textinfo="label",
+            hovertext=[item.get('hover_text', item['name']) for item in treemap_data],
+            hoverinfo="text",
+            marker=dict(
+                colors=colors,
+                line=dict(width=1, color='white')
+            )
+        ))
+        
+        fig.update_layout(
+            title=f"📋 Dependencies of: {critical_node_name}<br><sub>Grouped by Package | Colored by Node Type</sub>",
+            font_size=11,
+            height=600,
+            margin=dict(t=80, l=0, r=0, b=0)
+        )
+        
+        st.plotly_chart(fig, use_container_width=True, key=f"critical_treemap_deps_{critical_node_name}")
+        
+        # Summary statistics
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**📊 Package Summary:**")
+            for package, deps_in_package in package_groups.items():
+                st.write(f"• **{package}**: {len(deps_in_package)} dependencies")
+            if ungrouped_deps:
+                st.write(f"• **Other**: {len(ungrouped_deps)} dependencies")
+        
+        with col2:
+            st.write("**🎭 Type Summary:**")
+            type_counts = {}
+            all_deps = []
+            for deps_list in package_groups.values():
+                all_deps.extend(deps_list)
+            all_deps.extend(ungrouped_deps)
+            
+            for dep in all_deps:
+                dep_type = dep['type']
+                type_counts[dep_type] = type_counts.get(dep_type, 0) + 1
+            
+            for dep_type, count in sorted(type_counts.items()):
+                st.write(f"• **{dep_type}**: {count}")
+
+def _get_node_type_color(node_type: str) -> str:
+    """Get color for node type."""
+    color_map = {
+        'model': '#4287f5',      # blue
+        'test': '#42f59e',       # green
+        'source': '#f5a142',     # orange
+        'column': '#f542e5',     # pink
+        'exposure': '#9c42f5',   # purple
+        'metric': '#f54242',     # red
+        'seed': '#8cf542',       # light green
+        'snapshot': '#f58c42',   # orange-red
+        'analysis': '#8c42f5',   # violet
+        'macro': '#f5f542',      # yellow
+        'package': '#42f5f5',    # cyan
+    }
+    return color_map.get(node_type, '#999999')  # gray default
 
 def create_package_impact_chart(metrics: Dict[str, Any]) -> go.Figure:
     """Create a chart showing package impact distribution."""
@@ -519,6 +1079,13 @@ def main():
     include_columns = st.sidebar.checkbox("Include Columns", False)
     include_packages = st.sidebar.checkbox("Include Packages", False)
     
+    # Add aggregated view option - particularly useful for sources
+    aggregate_view = st.sidebar.checkbox(
+        "Aggregated View", 
+        value=True if node_type == 'source' else False,
+        help="Group similar nodes by source and package"
+    )
+    
     # Perform impact analysis
     with st.spinner("Analyzing impact..."):
         subgraph, upstream_nodes, downstream_nodes = create_impact_subgraph(
@@ -580,11 +1147,10 @@ def main():
     # Critical nodes
     if metrics['critical_nodes']:
         st.subheader("🚨 Critical Downstream Nodes")
-        critical_df = pd.DataFrame(
-            metrics['critical_nodes'],
-            columns=['Name', 'Downstream Count', 'Type']
-        )
-        st.dataframe(critical_df, use_container_width=True)
+        st.write(f"Found **{len(metrics['critical_nodes'])}** highly connected nodes (>10 dependencies each)")
+        
+        # Create interactive treemap visualization
+        _create_critical_nodes_treemap(graph, metrics['critical_nodes'], downstream_nodes)
     
     # Visualization
     st.subheader("🎨 Impact Visualization")
@@ -604,13 +1170,20 @@ def main():
                 st.write("🔴 Selected Node")
                 st.write("🟠 Upstream Dependencies")
                 st.write("🔵 Downstream Impact")
+                st.write("")
+                st.write("**Smart Consolidation:**")
+                st.write("♦ Sources with same name = 1 diamond")
+                st.write("📦 Hover to see all packages")
             with col2:
                 st.write("**Node Shapes:**")
                 st.write("● Models")
                 st.write("▲ Tests")
-                st.write("♦ Sources")
+                st.write("♦ Sources (consolidated)")
                 st.write("■ Columns")
                 st.write("⭐ Exposures")
+                st.write("")
+                st.write("**Node Sizes:**")
+                st.write("Larger = More critical/selected")
         
         agraph(nodes=nodes, edges=edges, config=config)
     else:
@@ -619,13 +1192,17 @@ def main():
     # Detailed analysis
     st.subheader("📋 Detailed Impact Analysis")
     
-    upstream_df, downstream_df = create_impact_tables(graph, upstream_nodes, downstream_nodes)
+    upstream_df, downstream_df = create_impact_tables(graph, upstream_nodes, downstream_nodes, node_type, aggregate_view)
     
     tab1, tab2, tab3 = st.tabs(["Upstream Dependencies", "Downstream Impact", "Node Details"])
     
     with tab1:
         if not upstream_df.empty:
-            st.write(f"**{len(upstream_df)} upstream dependencies**")
+            if aggregate_view:
+                st.write(f"**{len(upstream_df)} grouped upstream dependencies**")
+                st.info("📊 Aggregated view: Similar nodes are grouped by type and package. Toggle 'Aggregated View' in sidebar for detailed list.")
+            else:
+                st.write(f"**{len(upstream_df)} upstream dependencies**")
             st.dataframe(upstream_df, use_container_width=True)
             
             # Type breakdown
@@ -648,7 +1225,11 @@ def main():
     
     with tab2:
         if not downstream_df.empty:
-            st.write(f"**{len(downstream_df)} downstream dependencies**")
+            if aggregate_view:
+                st.write(f"**{len(downstream_df)} grouped downstream dependencies**")
+                st.info("📊 Aggregated view: Similar nodes are grouped by type and package. Toggle 'Aggregated View' in sidebar for detailed list.")
+            else:
+                st.write(f"**{len(downstream_df)} downstream dependencies**")
             st.dataframe(downstream_df, use_container_width=True)
             
             # Type breakdown
