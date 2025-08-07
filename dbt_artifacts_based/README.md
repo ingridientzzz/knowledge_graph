@@ -10,6 +10,7 @@ This project consists of these main components:
 3. **Plotly Impact Analysis App** (`impact_analysis_app_plotly.py`) - **Snowflake Streamlit compatible** version using Plotly
 4. **GraphViz Impact Analysis App** (`impact_analysis_app_graphviz.py`) - **Professional layouts** using PyGraphviz
 5. **Cytoscape Impact Analysis App** (`impact_analysis_app_cytoscape.py`) - **Interactive & Snowflake compatible** using st-link-analysis
+6. **igraph Impact Analysis App** (`impact_analysis_app_igraph.py`) - **Research-grade layouts** using python-igraph + Plotly
 
 ## 📊 Data Flow Architecture
 
@@ -269,6 +270,14 @@ After: 1 consolidated node
 - **plotly** - Interactive charts for analysis tables
 - **st-link-analysis** - Interactive Cytoscape.js graph visualization
 
+#### igraph Version (`impact_analysis_app_igraph.py`)
+- **streamlit** - Web application framework
+- **networkx** - Graph data structure and algorithms
+- **pandas** - Data manipulation and analysis
+- **plotly** - Interactive charts and graph display
+- **python-igraph** - Research-grade graph layout algorithms
+- **numpy** - Numerical computing for layout calculations
+
 ### Performance Features
 - **Caching**: Streamlit cache for graph loading
 - **Pickle storage**: Fast binary serialization for large graphs
@@ -335,6 +344,57 @@ CREATE STREAMLIT dbt_impact_analysis
 - ✅ **All visualization features** preserved
 - ✅ **Same analysis capabilities** as original
 - ✅ **Better performance** on large graphs
+
+## 🚀 Quick Start Guide
+
+### 1. Generate Knowledge Graph
+```bash
+# Parse your dbt manifest to create the knowledge graph
+python manifest_parser.py code_docs/manifest.json --storage-dir data --export-viz
+```
+
+### 2. Choose Your Application Version
+
+#### Standard Interactive Version (Local Development)
+```bash
+pip install -r requirements.txt
+streamlit run impact_analysis_app.py
+```
+
+#### Snowflake Streamlit Compatible (Plotly)
+```bash
+pip install -r requirements_plotly.txt
+streamlit run impact_analysis_app_plotly.py
+```
+
+#### Professional Static Layouts (GraphViz)
+```bash
+# Install system dependencies
+brew install graphviz  # macOS
+# sudo apt-get install graphviz graphviz-dev  # Ubuntu
+
+pip install -r requirements_graphviz.txt
+streamlit run impact_analysis_app_graphviz.py
+```
+
+#### Interactive Snowflake Compatible (Cytoscape)
+```bash
+pip install -r requirements_cytoscape.txt
+streamlit run impact_analysis_app_cytoscape.py
+```
+
+#### Research-Grade Layouts (igraph)
+```bash
+# Install system dependencies (if needed)
+brew install igraph  # macOS
+# sudo apt-get install libigraph0-dev  # Ubuntu
+
+pip install -r requirements_igraph.txt
+streamlit run impact_analysis_app_igraph.py
+```
+
+### 3. Open Your Browser
+Navigate to `http://localhost:8501` to start analyzing your dbt project dependencies!
 
 ## 🔧 Migration Guide
 

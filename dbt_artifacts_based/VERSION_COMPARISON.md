@@ -1,6 +1,6 @@
 # Impact Analysis App Version Comparison
 
-## 📊 Four Versions Available
+## 📊 Five Versions Available
 
 ### `impact_analysis_app.py` - Standard Version
 **Best for**: Local development, environments with custom Streamlit components
@@ -73,24 +73,44 @@ networkx>=2.8.0
 st-link-analysis>=0.4.0
 ```
 
+### `impact_analysis_app_igraph.py` - Professional Layout Version
+**Best for**: High-quality graph layouts, research-grade visualizations
+
+**Visualization**: python-igraph + Plotly (Advanced layout algorithms with interactive display)
+- Professional graph layout algorithms (Fruchterman-Reingold, Kamada-Kawai, DrL, etc.)
+- Research-grade layout quality optimized for large graphs
+- Interactive Plotly display with zoom, pan, hover
+- Selectable layout algorithms at runtime
+
+**Requirements**:
+```txt
+streamlit>=1.28.0
+plotly>=5.15.0
+pandas>=1.5.0
+networkx>=2.8.0
+python-igraph>=0.10.0
+numpy>=1.21.0
+```
+
 ## 🔄 Feature Comparison
 
-| Feature | Standard Version | Plotly Version | GraphViz Version | Cytoscape Version | Notes |
-|---------|------------------|----------------|------------------|-------------------|-------|
-| **Node Visualization** | ✅ Custom shapes | ✅ Plotly symbols | ✅ Professional shapes | ✅ Cytoscape shapes | All support type-based styling |
-| **Interactive Pan/Zoom** | ✅ Full support | ✅ Full support | ❌ Static image | ✅ Full support | Cytoscape & Standard most interactive |
-| **Hover Tooltips** | ✅ HTML tooltips | ✅ Text tooltips | ❌ No tooltips | ✅ Interactive tooltips | Cytoscape similar to Standard |
-| **Node Consolidation** | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | Identical logic |
-| **Impact Analysis** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Identical analysis features |
-| **Risk Assessment** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Same risk calculation |
-| **Package Charts** | ✅ Plotly pie charts | ✅ Plotly pie charts | ✅ Plotly pie charts | ✅ Plotly pie charts | Identical |
-| **Data Tables** | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | Identical |
-| **Critical Nodes** | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | Identical |
-| **Layout Algorithms** | ⚡ Physics only | ⚡ Spring only | ✅ 6 algorithms | ✅ 9 algorithms | Cytoscape has most options |
-| **Graph Quality** | ⚡ Good | ⚡ Good | ✅ Excellent | ✅ Excellent | GraphViz & Cytoscape best |
-| **Download/Export** | ❌ No export | ❌ No export | ✅ PNG download | ⚡ JSON export | GraphViz for images, Cytoscape for data |
-| **Snowflake Compat** | ❌ Not supported | ✅ Compatible | ❓ Unknown | ✅ Compatible | Cytoscape & Plotly work in Snowflake |
-| **Performance** | ⚡ Good | ✅ Better | ✅ Fast rendering | ✅ Excellent | Cytoscape optimized for large graphs |
+| Feature | Standard | Plotly | GraphViz | Cytoscape | igraph | Notes |
+|---------|----------|--------|----------|-----------|--------|-------|
+| **Node Visualization** | ✅ Custom shapes | ✅ Plotly symbols | ✅ Professional shapes | ✅ Cytoscape shapes | ✅ Plotly symbols | All support type-based styling |
+| **Interactive Pan/Zoom** | ✅ Full support | ✅ Full support | ❌ Static image | ✅ Full support | ✅ Full support | All interactive except GraphViz |
+| **Hover Tooltips** | ✅ HTML tooltips | ✅ Text tooltips | ❌ No tooltips | ✅ Interactive tooltips | ✅ Rich tooltips | igraph similar to Plotly |
+| **Node Consolidation** | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | ✅ Source grouping | Identical logic across all |
+| **Impact Analysis** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Identical analysis features |
+| **Risk Assessment** | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Same risk calculation |
+| **Package Charts** | ✅ Plotly charts | ✅ Plotly charts | ✅ Plotly charts | ✅ Plotly charts | ✅ Plotly charts | Identical |
+| **Data Tables** | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | ✅ Streamlit tables | Identical |
+| **Critical Nodes** | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | ✅ Treemap viz | Identical |
+| **Layout Algorithms** | ⚡ Physics only | ⚡ Spring only | ✅ 6 algorithms | ✅ 9 algorithms | ✅ 6 algorithms | igraph: research-grade quality |
+| **Graph Quality** | ⚡ Good | ⚡ Good | ✅ Excellent | ✅ Excellent | ⭐ Outstanding | igraph has best layout quality |
+| **Download/Export** | ❌ No export | ❌ No export | ✅ PNG download | ⚡ JSON export | ⚡ Plot export | Via Plotly export options |
+| **Snowflake Compat** | ❌ Not supported | ✅ Compatible | ❓ Unknown | ✅ Compatible | ✅ Compatible | Uses native Plotly |
+| **Performance** | ⚡ Good | ✅ Better | ✅ Fast rendering | ✅ Excellent | ✅ Very Good | igraph optimized for large graphs |
+| **Setup Complexity** | ✅ Easy | ✅ Very Easy | ⚡ Moderate | ✅ Easy | ⚡ Moderate | igraph requires system deps |
 
 ## 🎯 Choosing the Right Version
 
@@ -119,6 +139,13 @@ st-link-analysis>=0.4.0
 - ✅ Need multiple layout algorithm options
 - ✅ Want node/edge manipulation capabilities
 - ✅ **Best of both worlds: Interactive + Snowflake compatible**
+
+### Use igraph Version When:
+- ✅ **Need the highest quality graph layouts**
+- ✅ Working with research or publication-grade visualizations
+- ✅ Want to experiment with different layout algorithms
+- ✅ Need optimized layouts for large graphs (200+ nodes)
+- ✅ **Best layout quality with interactive features**
 
 ## 🚀 Quick Start Guide
 
@@ -152,6 +179,15 @@ pip install -r requirements_cytoscape.txt
 streamlit run impact_analysis_app_cytoscape.py
 ```
 
+### For Research-Grade Layouts:
+```bash
+# Install system dependencies (if needed)
+brew install igraph  # macOS
+# sudo apt-get install libigraph0-dev  # Ubuntu
+pip install -r requirements_igraph.txt
+streamlit run impact_analysis_app_igraph.py
+```
+
 ## 📋 Migration Notes
 
 ### Code Structure
@@ -182,35 +218,41 @@ Only the visualization rendering differs:
 - **Plotly**: NetworkX spring layout (more stable)
 - **GraphViz**: 6 professional algorithms (dot, neato, fdp, sfdp, circo, twopi)
 - **Cytoscape**: 9 interactive algorithms (dagre, fcose, cola, breadthfirst, circle, etc.)
+- **igraph**: 6 research-grade algorithms (fr, kk, drl, lgl, circle, rt)
 
 ### Node Appearance
 - **Standard**: Custom shapes (diamond, triangle, etc.)
 - **Plotly**: Plotly symbols (similar but standardized)
 - **GraphViz**: Professional shapes (diamond, ellipse, box, etc.)
 - **Cytoscape**: Professional interactive shapes (diamond, rectangle, ellipse, etc.)
+- **igraph**: Plotly symbols with optimized positioning
 
 ### Interactivity
 - **Standard**: Physics-based node dragging
 - **Plotly**: Static layout with zoom/pan
 - **GraphViz**: Static image (no interaction)
 - **Cytoscape**: Full node manipulation, dragging, context menus
+- **igraph**: Static layout with zoom/pan, algorithm selection
 
 ### Performance
 - **Standard**: Good for <100 nodes
 - **Plotly**: Better for 100+ nodes
 - **GraphViz**: Excellent for any size (static rendering)
 - **Cytoscape**: Excellent for large graphs (optimized interactive rendering)
+- **igraph**: Very good for large graphs (optimized layout computation)
 
 ### Output Quality
 - **Standard**: Good interactive quality
 - **Plotly**: Good interactive quality  
 - **GraphViz**: Excellent publication quality
 - **Cytoscape**: Excellent interactive quality
+- **igraph**: Outstanding layout quality (research-grade)
 
 ### Snowflake Compatibility
 - **Standard**: ❌ Not supported (custom component)
 - **Plotly**: ✅ Fully supported (native Plotly)
 - **GraphViz**: ❓ Unknown (depends on external dependencies)
 - **Cytoscape**: ✅ Supported (as of August 2025 custom components update)
+- **igraph**: ❓ Depends on python-igraph installation in Snowflake
 
-All four versions provide comprehensive analysis capabilities with different visualization strengths!
+All five versions provide comprehensive analysis capabilities with different visualization strengths!
