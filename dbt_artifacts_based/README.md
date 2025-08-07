@@ -4,9 +4,11 @@ A comprehensive solution for building knowledge graphs from dbt manifests and pe
 
 ## 🎯 Overview
 
-This project consists of two main components:
+This project consists of these main components:
 1. **Knowledge Graph Builder** (`manifest_parser.py`) - Parses dbt manifests into structured graphs
-2. **Impact Analysis App** (`impact_analysis_app.py`) - Interactive Streamlit app for visualization and analysis
+2. **Impact Analysis App** (`impact_analysis_app.py`) - Interactive Streamlit app using streamlit-agraph
+3. **Plotly Impact Analysis App** (`impact_analysis_app_plotly.py`) - **Snowflake Streamlit compatible** version using Plotly
+4. **GraphViz Impact Analysis App** (`impact_analysis_app_graphviz.py`) - **Professional layouts** using PyGraphviz
 
 ## 📊 Data Flow Architecture
 
@@ -96,10 +98,24 @@ graph TD
 python manifest_parser.py code_docs/manifest.json --storage-dir data --export-viz
 ```
 
-### 2. Launch Impact Analysis App
+### 2. Choose Your Visualization Method
+
+#### Option A: Standard Version (streamlit-agraph)
 ```bash
-# Start the interactive Streamlit application
+# For local development or environments with streamlit-agraph
 streamlit run impact_analysis_app.py
+```
+
+#### Option B: Snowflake Streamlit Version (Plotly)
+```bash
+# For Snowflake Streamlit or environments without streamlit-agraph
+streamlit run impact_analysis_app_plotly.py
+```
+
+#### Option C: Professional Layout Version (GraphViz)
+```bash
+# For high-quality static graph rendering with professional layouts
+streamlit run impact_analysis_app_graphviz.py
 ```
 
 ### 3. Access the Application
@@ -218,11 +234,26 @@ After: 1 consolidated node
 ## 🛠️ Technical Details
 
 ### Dependencies
+
+#### Standard Version (`impact_analysis_app.py`)
 - **streamlit** - Web application framework
 - **networkx** - Graph data structure and algorithms
 - **pandas** - Data manipulation and analysis
 - **plotly** - Interactive charts and visualizations
 - **streamlit-agraph** - Interactive graph visualization component
+
+#### Snowflake Streamlit Version (`impact_analysis_app_plotly.py`)
+- **streamlit** - Web application framework
+- **networkx** - Graph data structure and algorithms
+- **pandas** - Data manipulation and analysis
+- **plotly** - Interactive charts and visualizations (replaces streamlit-agraph)
+
+#### GraphViz Version (`impact_analysis_app_graphviz.py`)
+- **streamlit** - Web application framework
+- **networkx** - Graph data structure and algorithms
+- **pandas** - Data manipulation and analysis
+- **plotly** - Interactive charts for analysis tables
+- **pygraphviz** - Professional graph layout and rendering
 
 ### Performance Features
 - **Caching**: Streamlit cache for graph loading
@@ -254,6 +285,43 @@ After: 1 consolidated node
 - **Deployment Planning**: Understand deployment order based on dependencies
 - **Risk Management**: Prioritize testing based on downstream impact
 
+## 🏔️ Snowflake Streamlit Deployment
+
+### Using the Plotly Version in Snowflake
+
+#### 1. Prepare Your Files
+```bash
+# Generate the knowledge graph data locally first
+python manifest_parser.py code_docs/manifest.json --storage-dir data --export-viz
+```
+
+#### 2. Upload to Snowflake Stage
+```sql
+-- Create a stage for your app files
+CREATE STAGE dbt_impact_analysis;
+
+-- Upload files to the stage
+PUT file://impact_analysis_app_plotly.py @dbt_impact_analysis;
+PUT file://data/knowledge_graph.gpickle @dbt_impact_analysis/data/;
+PUT file://data/graph_metadata.json @dbt_impact_analysis/data/;
+PUT file://requirements_plotly.txt @dbt_impact_analysis;
+```
+
+#### 3. Create Streamlit App in Snowflake
+```sql
+CREATE STREAMLIT dbt_impact_analysis
+  ROOT_LOCATION = '@dbt_impact_analysis'
+  MAIN_FILE = 'impact_analysis_app_plotly.py'
+  QUERY_WAREHOUSE = 'YOUR_WAREHOUSE';
+```
+
+#### 4. Key Differences in Snowflake Version
+- ✅ **Plotly network graphs** instead of streamlit-agraph
+- ✅ **Interactive zoom, pan, hover** functionality
+- ✅ **All visualization features** preserved
+- ✅ **Same analysis capabilities** as original
+- ✅ **Better performance** on large graphs
+
 ## 🔧 Migration Guide
 
 ### From graph_storage.py
@@ -270,6 +338,21 @@ python manifest_parser.py manifest.json --export-viz
 ```
 
 All functionality has been consolidated into `manifest_parser.py` with improved performance and consistency.
+
+### From streamlit-agraph to Plotly
+If deploying to Snowflake Streamlit:
+
+**Local Development:**
+```bash
+streamlit run impact_analysis_app.py  # Uses streamlit-agraph
+```
+
+**Snowflake Streamlit:**
+```bash
+streamlit run impact_analysis_app_plotly.py  # Uses Plotly
+```
+
+Both versions provide the same functionality with identical analysis features.
 
 ## 🐛 Troubleshooting
 

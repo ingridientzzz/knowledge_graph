@@ -1,0 +1,6 @@
+# Requirements for Plotly version - Snowflake Streamlit compatible
+streamlit>=1.28.0
+plotly>=5.15.0
+pandas>=1.5.0
+networkx>=2.8.0
+# Remove streamlit-agraph dependency for Snowflake compatibility
