@@ -203,10 +203,6 @@ def create_impact_subgraph(graph: nx.MultiDiGraph, selected_node: str,
     """Create a subgraph showing the impact of the selected node."""
     
     # For sources, aggregate impact from all nodes with the same source name
-    if selected_node not in graph.nodes:
-        st.error(f"Selected node '{selected_node}' not found in graph. Please regenerate the graph data.")
-        return None
-        
     if graph.nodes[selected_node].get('node_type') == 'source':
         return _create_aggregated_source_impact(graph, selected_node, upstream_depth, downstream_depth,
                                               include_tests, include_columns, include_packages)
@@ -247,9 +243,6 @@ def _create_aggregated_source_impact(graph: nx.MultiDiGraph, selected_node: str,
     """Create impact analysis for a source by aggregating all source nodes with the same name."""
     
     # Get the source name from the selected node
-    if selected_node not in graph.nodes:
-        return None, set(), set()
-        
     selected_source_name = graph.nodes[selected_node].get('name', '')
     
     # Find all source nodes with the same name across different packages
@@ -307,9 +300,6 @@ def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGrap
     nodes = []
     edges = []
     
-
-    # Show all nodes - no limiting for complete visibility
-
     # Create consolidated nodes
     for consolidated_id, node_info in consolidated_nodes.items():
         node_type = node_info['node_type']
@@ -318,51 +308,59 @@ def create_impact_visualization(graph: nx.MultiDiGraph, subgraph: nx.MultiDiGrap
         # Determine node color and size based on impact
         if selected_node in node_info['original_ids']:
             color = NODE_TYPE_COLORS['selected']
-            size = 25  # Much larger for selected node - improved readability
+            size = 40  # Larger for consolidated selected node
         elif any(node_id in upstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['upstream']
-            size = 18  # Larger for better visibility
+            size = 25
         elif any(node_id in downstream_nodes for node_id in node_info['original_ids']):
             color = NODE_TYPE_COLORS['downstream']
-            size = 18  # Larger for better visibility
+            size = 25
         else:
             color = NODE_TYPE_COLORS.get(node_type, NODE_TYPE_COLORS['unknown'])
-            size = 15  # Larger base size for readability
+            size = 20
         
-        # Simple tooltip showing just the ID
+        # Create enhanced tooltip for consolidated sources
         if node_info['is_consolidated']:
-            # For consolidated nodes, show the representative ID
-            tooltip = node_info['original_ids'][0]
+            packages = node_info['packages']
+            tooltip = f"<b>{name}</b><br>Type: {node_type}<br>Consolidated from {len(node_info['original_ids'])} packages:<br>"
+            tooltip += "<br>".join([f"• {pkg}" for pkg in sorted(packages)[:5]])
+            if len(packages) > 5:
+                tooltip += f"<br>... and {len(packages) - 5} more"
         else:
-            # Single node tooltip - just show the ID
+            # Single node tooltip
             original_id = node_info['original_ids'][0]
-            tooltip = original_id
+            attrs = graph.nodes[original_id]
+            tooltip = f"<b>{name}</b><br>Type: {node_type}<br>ID: {original_id}"
+            if 'description' in attrs and attrs['description']:
+                desc = attrs['description'][:100] + "..." if len(attrs['description']) > 100 else attrs['description']
+                tooltip += f"<br>Description: {desc}"
+            if 'package_name' in attrs:
+                tooltip += f"<br>Package: {attrs['package_name']}"
         
         # Get shape
         shape = NODE_TYPE_SHAPES.get(node_type, "dot")
         
         nodes.append(Node(
             id=consolidated_id,
-            label=name[:20] + "..." if len(name) > 20 else name,  # Truncate long labels
+            label=name,
             size=size,
             color=color,
             shape=shape,
-            title=tooltip,
-            font={'size': 10, 'face': 'Arial', 'color': '#000000'}  # Enhanced font for readability
+            title=tooltip
         ))
     
     # Create consolidated edges
     edges = _create_consolidated_edges(subgraph, node_mapping, consolidated_nodes, selected_node, upstream_nodes, downstream_nodes)
     
-    # Enhanced Configuration for better spacing - physics layout
+    # Configuration
     config = Config(
-        width=2000,  # Much wider canvas
-        height=1400,  # Much taller canvas  
+        width=1200,
+        height=800,
         directed=True,
         physics=True,
-        hierarchical=False,  # Use physics for natural spreading
+        hierarchical=False,
         nodeHighlightBehavior=True,
-        highlightColor="#F7A7A6"
+        highlightColor="#F7A7A6",
     )
     
     return nodes, edges, config
@@ -425,10 +423,6 @@ def _create_consolidated_edges(subgraph: nx.MultiDiGraph, node_mapping: Dict[str
     edge_set = set()  # To avoid duplicate edges
     
     for source, target, attrs in subgraph.edges(data=True):
-        # Safety check: ensure both source and target are in node_mapping
-        if source not in node_mapping or target not in node_mapping:
-            continue  # Skip edges with unmapped nodes
-            
         consolidated_source = node_mapping[source]
         consolidated_target = node_mapping[target]
         
@@ -444,12 +438,7 @@ def _create_consolidated_edges(subgraph: nx.MultiDiGraph, node_mapping: Dict[str
         
         edge_type = attrs.get('edge_type', 'related')
         
-        # Determine edge styling based on impact with safety checks
-        if consolidated_source not in consolidated_nodes:
-            continue  # Skip edges to/from nodes not in consolidated set
-        if consolidated_target not in consolidated_nodes:
-            continue  # Skip edges to/from nodes not in consolidated set
-            
+        # Determine edge styling based on impact
         source_is_selected = selected_node in consolidated_nodes[consolidated_source]['original_ids']
         target_is_selected = selected_node in consolidated_nodes[consolidated_target]['original_ids']
         source_is_upstream = any(node_id in upstream_nodes for node_id in consolidated_nodes[consolidated_source]['original_ids'])
@@ -457,23 +446,22 @@ def _create_consolidated_edges(subgraph: nx.MultiDiGraph, node_mapping: Dict[str
         
         if source_is_selected or target_is_selected:
             color = "#ff0000"
-            width = 1  # Much thicker for selected connections
+            width = 4
         elif source_is_upstream or target_is_downstream:
             color = NODE_TYPE_COLORS.get('upstream', '#ff9900')
-            width = 2  # Thicker for important connections
+            width = 2
         else:
             color = "#666666"
-            width = 1  # Thicker base width for visibility
+            width = 1
         
         edges.append(Edge(
             source=consolidated_source,
             target=consolidated_target,
+            label=edge_type,
             title=f"Relationship: {edge_type}",
             color=color,
             width=width,
-            type="CURVE_SMOOTH",
-            arrows="to",  # Enhanced arrow visibility
-            font={'size': 12, 'align': 'middle'}  # Better edge labels
+            type="CURVE_SMOOTH"
         ))
     
     return edges
@@ -1024,11 +1012,6 @@ def main():
     # Sidebar
     st.sidebar.title("Impact Analysis Configuration")
     
-    # Add cache refresh option for KeyError issues
-    if st.sidebar.button("🔄 Refresh Data", help="Clear cache and reload if experiencing KeyErrors"):
-        st.cache_data.clear()
-        st.rerun()
-    
     # Display metadata
     if metadata:
         st.sidebar.subheader("📊 Graph Statistics")
@@ -1097,9 +1080,6 @@ def main():
     include_packages = st.sidebar.checkbox("Include Packages", False)
     
     # Add aggregated view option - particularly useful for sources
-
-    # Removed max nodes limitation - show all connected nodes
-
     aggregate_view = st.sidebar.checkbox(
         "Aggregated View", 
         value=True if node_type == 'source' else False,
@@ -1203,13 +1183,7 @@ def main():
                 st.write("⭐ Exposures")
                 st.write("")
                 st.write("**Node Sizes:**")
-                st.write("🔍 Enhanced for readability (35-80px)")
-                st.write("📏 Larger = More critical/selected")
-                st.write("")
-                st.write("**Enhanced Visibility:**")
-                st.write("🖼️ Larger canvas (1400x1000)")
-                st.write("🔗 Thicker edges (3-8px)")
-                st.write("📝 Improved fonts (14px Arial)")
+                st.write("Larger = More critical/selected")
         
         agraph(nodes=nodes, edges=edges, config=config)
     else:
@@ -1279,12 +1253,7 @@ def main():
     with tab3:
         st.subheader(f"Selected {node_type.title()} Details")
         
-        # Get node attributes with safety check
-        if selected_node not in graph.nodes:
-            st.error(f"Selected node '{selected_node}' not found in graph. Please regenerate the graph data.")
-            st.info("Run: `python manifest_parser.py path/to/manifest.json --storage-dir data`")
-            return
-            
+        # Get node attributes
         node_attrs = graph.nodes[selected_node]
         
         col1, col2 = st.columns(2)
