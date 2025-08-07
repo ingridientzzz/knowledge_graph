@@ -6,10 +6,12 @@ Transforms dbt metadata into a graph-friendly format with nodes, relationships, 
 
 import json
 import logging
+import pickle
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime
 import networkx as nx
 
 
@@ -80,11 +82,14 @@ class GraphEdge:
 
 
 class ManifestParser:
-    """Parser for dbt manifest.json files."""
+    """Parser for dbt manifest.json files with integrated storage capabilities."""
     
-    def __init__(self, manifest_path: str):
-        """Initialize the parser with a manifest file path."""
+    def __init__(self, manifest_path: str, storage_dir: str = "data"):
+        """Initialize the parser with a manifest file path and storage directory."""
         self.manifest_path = Path(manifest_path)
+        self.storage_dir = Path(storage_dir)
+        self.storage_dir.mkdir(exist_ok=True)
+        
         self.manifest_data: Dict[str, Any] = {}
         self.nodes: Dict[str, GraphNode] = {}
         self.edges: List[GraphEdge] = []
@@ -93,6 +98,12 @@ class ManifestParser:
         # Setup logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+        
+        # File paths for storage
+        self.nodes_file = self.storage_dir / "nodes.json"
+        self.edges_file = self.storage_dir / "edges.json"
+        self.graph_file = self.storage_dir / "knowledge_graph.gpickle"
+        self.metadata_file = self.storage_dir / "graph_metadata.json"
         
     def parse_manifest(self) -> Tuple[Dict[str, GraphNode], List[GraphEdge]]:
         """
@@ -236,10 +247,17 @@ class ManifestParser:
             'loaded_at_field': source_data.get('loaded_at_field'),
         }
         
+        # For source nodes, combine source_name and table_name for the node name
+        # e.g., for "source.project.account_optimized.account_edp_optimized"
+        # the name should be "account_optimized.account_edp_optimized"
+        source_name = source_data.get('source_name') or ''
+        table_name = source_data.get('name') or ''
+        node_name = f"{source_name}.{table_name}" if source_name and table_name else (table_name or source_name or '')
+        
         node = GraphNode(
             unique_id=unique_id,
             node_type=NodeType.SOURCE,
-            name=source_data.get('name', ''),
+            name=node_name,
             properties=properties
         )
         self.nodes[unique_id] = node
@@ -615,8 +633,118 @@ class ManifestParser:
         self.logger.info(f"Created NetworkX graph with {self.graph.number_of_nodes()} nodes and {self.graph.number_of_edges()} edges")
         return self.graph
     
+    def build_and_store_graph(self) -> nx.MultiDiGraph:
+        """
+        Parse manifest, build graph, and store all outputs.
+        This is the main workflow method that replaces the need for separate scripts.
+        
+        Returns:
+            NetworkX MultiDiGraph object
+        """
+        self.logger.info(f"Building knowledge graph from manifest: {self.manifest_path}")
+        
+        # Parse manifest
+        nodes, edges = self.parse_manifest()
+        
+        # Create NetworkX graph
+        graph = self.create_networkx_graph()
+        
+        # Store all graph data
+        self._save_graph_data(graph, nodes, edges, self.get_statistics())
+        
+        self.logger.info(f"Knowledge graph built and stored with {len(nodes)} nodes and {len(edges)} edges")
+        return graph
+    
+    def load_graph(self) -> Optional[nx.MultiDiGraph]:
+        """
+        Load graph from stored files.
+        
+        Returns:
+            NetworkX MultiDiGraph object or None if loading fails
+        """
+        try:
+            # Try to load from pickle first (fastest)
+            if self.graph_file.exists():
+                self.logger.info(f"Loading graph from pickle: {self.graph_file}")
+                with open(self.graph_file, 'rb') as f:
+                    graph = pickle.load(f)
+                self.logger.info(f"Loaded graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
+                return graph
+            
+            # Fall back to JSON files
+            elif self.nodes_file.exists() and self.edges_file.exists():
+                self.logger.info("Loading graph from JSON files")
+                return self._load_graph_from_json()
+            
+            else:
+                self.logger.warning("No stored graph files found")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Failed to load graph: {e}")
+            return None
+    
+    def _load_graph_from_json(self) -> nx.MultiDiGraph:
+        """Load graph from JSON node and edge files."""
+        graph = nx.MultiDiGraph()
+        
+        # Load nodes
+        with open(self.nodes_file, 'r', encoding='utf-8') as f:
+            nodes_data = json.load(f)
+        
+        for node_data in nodes_data.copy():
+            node_id = node_data.pop('id')
+            graph.add_node(node_id, **node_data)
+        
+        # Load edges
+        with open(self.edges_file, 'r', encoding='utf-8') as f:
+            edges_data = json.load(f)
+        
+        for edge_data in edges_data.copy():
+            source = edge_data.pop('source')
+            target = edge_data.pop('target')
+            graph.add_edge(source, target, **edge_data)
+        
+        return graph
+    
+    def _save_graph_data(self, graph: nx.MultiDiGraph, nodes: Dict[str, GraphNode], 
+                        edges: List[GraphEdge], statistics: Dict[str, Any]) -> None:
+        """Save graph data to various formats."""
+        
+        # Save as pickle (for fast loading)
+        self.logger.info(f"Saving graph to pickle: {self.graph_file}")
+        with open(self.graph_file, 'wb') as f:
+            pickle.dump(graph, f)
+        
+        # Save nodes as JSON
+        self.logger.info(f"Saving nodes to JSON: {self.nodes_file}")
+        nodes_data = [node.to_dict() for node in nodes.values()]
+        with open(self.nodes_file, 'w', encoding='utf-8') as f:
+            json.dump(nodes_data, f, indent=2, default=str)
+        
+        # Save edges as JSON
+        self.logger.info(f"Saving edges to JSON: {self.edges_file}")
+        edges_data = [edge.to_dict() for edge in edges]
+        with open(self.edges_file, 'w', encoding='utf-8') as f:
+            json.dump(edges_data, f, indent=2, default=str)
+        
+        # Save metadata
+        metadata = {
+            'created_at': datetime.now().isoformat(),
+            'statistics': statistics,
+            'file_info': {
+                'nodes_file': str(self.nodes_file),
+                'edges_file': str(self.edges_file),
+                'graph_file': str(self.graph_file)
+            }
+        }
+        
+        self.logger.info(f"Saving metadata to: {self.metadata_file}")
+        with open(self.metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2, default=str)
+    
     def export_to_json(self, nodes_file: str, edges_file: str) -> None:
-        """Export nodes and edges to JSON files."""
+        """Export nodes and edges to specific JSON files (legacy method)."""
         self.logger.info(f"Exporting nodes to {nodes_file} and edges to {edges_file}")
         
         # Export nodes
@@ -630,6 +758,118 @@ class ManifestParser:
             json.dump(edges_data, f, indent=2, default=str)
         
         self.logger.info("Export completed successfully")
+    
+    def export_for_visualization(self, output_dir: str = "visualization") -> Dict[str, str]:
+        """
+        Export graph data in formats suitable for visualization tools.
+        
+        Args:
+            output_dir: Directory to save visualization files
+            
+        Returns:
+            Dictionary with file paths of exported files
+        """
+        output_path = Path(output_dir)
+        output_path.mkdir(exist_ok=True)
+        
+        graph = self.load_graph()
+        if not graph:
+            # If no stored graph, create it from current state
+            if not self.nodes:
+                self.logger.warning("No graph data available. Parse manifest first.")
+                return {}
+            graph = self.create_networkx_graph()
+        
+        exported_files = {}
+        
+        # Export as GraphML (for Gephi, Cytoscape)
+        # Need to convert complex data types to strings for GraphML compatibility
+        graphml_graph = graph.copy()
+        for node_id, attrs in graphml_graph.nodes(data=True):
+            for key, value in attrs.items():
+                if isinstance(value, (list, dict)):
+                    attrs[key] = json.dumps(value) if value else ""
+                elif value is None:
+                    attrs[key] = ""
+                elif not isinstance(value, (str, int, float, bool)):
+                    attrs[key] = str(value)
+        
+        for u, v, attrs in graphml_graph.edges(data=True):
+            for key, value in attrs.items():
+                if isinstance(value, (list, dict)):
+                    attrs[key] = json.dumps(value) if value else ""
+                elif value is None:
+                    attrs[key] = ""
+                elif not isinstance(value, (str, int, float, bool)):
+                    attrs[key] = str(value)
+        
+        graphml_file = output_path / "knowledge_graph.graphml"
+        self.logger.info(f"Exporting to GraphML: {graphml_file}")
+        nx.write_graphml(graphml_graph, graphml_file)
+        exported_files['graphml'] = str(graphml_file)
+        
+        # Export as GML (for various tools)
+        # GML also has issues with complex data types, so use the cleaned graph
+        gml_file = output_path / "knowledge_graph.gml"
+        self.logger.info(f"Exporting to GML: {gml_file}")
+        try:
+            nx.write_gml(graphml_graph, gml_file)  # Use the cleaned graph
+            exported_files['gml'] = str(gml_file)
+        except Exception as e:
+            self.logger.warning(f"GML export failed: {e}. Skipping GML export.")
+            exported_files['gml'] = "failed"
+        
+        # Export node and edge lists for web visualization
+        vis_nodes = []
+        vis_edges = []
+        
+        for node_id, attrs in graph.nodes(data=True):
+            vis_node = {
+                'id': node_id,
+                'label': attrs.get('name', node_id),
+                'type': attrs.get('node_type', 'unknown'),
+                'group': attrs.get('node_type', 'unknown')
+            }
+            # Add important properties
+            for key in ['description', 'package_name', 'resource_type']:
+                if key in attrs:
+                    vis_node[key] = attrs[key]
+            vis_nodes.append(vis_node)
+        
+        for source, target, attrs in graph.edges(data=True):
+            vis_edge = {
+                'source': source,
+                'target': target,
+                'type': attrs.get('edge_type', 'related'),
+                'label': attrs.get('edge_type', 'related')
+            }
+            vis_edges.append(vis_edge)
+        
+        # Save visualization data
+        vis_data = {
+            'nodes': vis_nodes,
+            'edges': vis_edges,
+            'metadata': self.get_stored_metadata()
+        }
+        
+        vis_file = output_path / "visualization_data.json"
+        self.logger.info(f"Exporting visualization data: {vis_file}")
+        with open(vis_file, 'w', encoding='utf-8') as f:
+            json.dump(vis_data, f, indent=2, default=str)
+        exported_files['visualization'] = str(vis_file)
+        
+        return exported_files
+    
+    def get_stored_metadata(self) -> Optional[Dict[str, Any]]:
+        """Get stored graph metadata."""
+        try:
+            if self.metadata_file.exists():
+                with open(self.metadata_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return None
+        except Exception as e:
+            self.logger.error(f"Failed to load metadata: {e}")
+            return None
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get parsing statistics."""
@@ -653,12 +893,15 @@ class ManifestParser:
 
 
 def main():
-    """Main function for testing the manifest parser."""
+    """Main function for the consolidated manifest parser and knowledge graph builder."""
     import argparse
     
-    parser = argparse.ArgumentParser(description='Parse dbt manifest.json file')
+    parser = argparse.ArgumentParser(description='Build knowledge graph from dbt manifest.json file')
     parser.add_argument('manifest_path', help='Path to manifest.json file')
-    parser.add_argument('--output-dir', default='.', help='Output directory for JSON files')
+    parser.add_argument('--storage-dir', default='data', help='Storage directory for graph files')
+    parser.add_argument('--export-viz', action='store_true', help='Export visualization files')
+    parser.add_argument('--load-only', action='store_true', help='Load existing graph instead of rebuilding')
+    parser.add_argument('--legacy-export', help='Export to specific files (format: nodes.json,edges.json)')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose logging')
     
     args = parser.parse_args()
@@ -666,29 +909,59 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    # Parse manifest
-    manifest_parser = ManifestParser(args.manifest_path)
-    nodes, edges = manifest_parser.parse_manifest()
+    # Initialize parser
+    manifest_parser = ManifestParser(args.manifest_path, args.storage_dir)
     
-    # Export to JSON
-    nodes_file = Path(args.output_dir) / 'nodes.json'
-    edges_file = Path(args.output_dir) / 'edges.json'
-    manifest_parser.export_to_json(str(nodes_file), str(edges_file))
+    if args.load_only:
+        # Load existing graph
+        graph = manifest_parser.load_graph()
+        if not graph:
+            print("No existing graph found. Use without --load-only to build new graph.")
+            return
+        stats = manifest_parser.get_stored_metadata()
+        if stats and 'statistics' in stats:
+            stats = stats['statistics']
+        else:
+            stats = {'total_nodes': graph.number_of_nodes(), 'total_edges': graph.number_of_edges()}
+    else:
+        # Build and store graph (main workflow)
+        graph = manifest_parser.build_and_store_graph()
+        stats = manifest_parser.get_statistics()
+    
+    # Legacy export if requested
+    if args.legacy_export:
+        files = args.legacy_export.split(',')
+        if len(files) == 2:
+            manifest_parser.export_to_json(files[0].strip(), files[1].strip())
+            print(f"\nLegacy export completed: {files[0]}, {files[1]}")
+    
+    # Export visualization files if requested
+    if args.export_viz:
+        print("\nExporting visualization files...")
+        exported = manifest_parser.export_for_visualization()
+        for format_name, file_path in exported.items():
+            print(f"  {format_name}: {file_path}")
     
     # Print statistics
-    stats = manifest_parser.get_statistics()
-    print("\nParsing Statistics:")
-    print(f"Total nodes: {stats['total_nodes']}")
-    print(f"Total edges: {stats['total_edges']}")
-    print(f"Manifest version: {stats['manifest_version']}")
-    print("\nNode counts by type:")
-    for node_type, count in stats['node_counts'].items():
-        if count > 0:
-            print(f"  {node_type}: {count}")
-    print("\nEdge counts by type:")
-    for edge_type, count in stats['edge_counts'].items():
-        if count > 0:
-            print(f"  {edge_type}: {count}")
+    print("\nKnowledge Graph Statistics:")
+    print(f"Total nodes: {stats.get('total_nodes', 'unknown')}")
+    print(f"Total edges: {stats.get('total_edges', 'unknown')}")
+    if 'manifest_version' in stats:
+        print(f"Manifest version: {stats['manifest_version']}")
+    
+    if 'node_counts' in stats:
+        print("\nNode counts by type:")
+        for node_type, count in stats['node_counts'].items():
+            if count > 0:
+                print(f"  {node_type}: {count}")
+    
+    if 'edge_counts' in stats:
+        print("\nEdge counts by type:")
+        for edge_type, count in stats['edge_counts'].items():
+            if count > 0:
+                print(f"  {edge_type}: {count}")
+    
+    print(f"\nOutput files stored in: {manifest_parser.storage_dir}")
 
 
 if __name__ == "__main__":

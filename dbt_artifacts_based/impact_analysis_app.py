@@ -106,7 +106,7 @@ def load_graph_data() -> Optional[nx.MultiDiGraph]:
         
         else:
             st.error("No graph data found. Please run the manifest parser first.")
-            st.code("python graph_storage.py path/to/manifest.json --storage-dir data")
+            st.code("python manifest_parser.py path/to/manifest.json --storage-dir data")
             return None
             
     except Exception as e:
@@ -367,37 +367,37 @@ def calculate_impact_metrics(graph: nx.MultiDiGraph, selected_node: str,
     
     return metrics
 
+def _create_node_data(graph: nx.MultiDiGraph, node_ids: Set[str]) -> List[Dict]:
+    """Helper function to create node data for impact tables."""
+    data = []
+    for node_id in node_ids:
+        attrs = graph.nodes[node_id]
+        row = {
+            'name': attrs.get('name', node_id),
+            'type': attrs.get('node_type', 'unknown'),
+            'dbt_project': attrs.get('package_name', 'unknown'),
+            'description': attrs.get('description', '')[:100] + "..." if attrs.get('description', '') and len(attrs.get('description', '')) > 100 else attrs.get('description', ''),
+            'id': node_id,
+        }
+        
+        # Add type-specific fields
+        if attrs.get('node_type') == 'model':
+            row['materialization'] = attrs.get('materialization', '')
+            row['database'] = attrs.get('database', '')
+            row['schema'] = attrs.get('schema', '')
+        elif attrs.get('node_type') == 'source':
+            row['source_name'] = attrs.get('source_name', '')
+            row['database'] = attrs.get('database', '')
+            row['schema'] = attrs.get('schema', '')
+        
+        data.append(row)
+    return data
+
 def create_impact_tables(graph: nx.MultiDiGraph, upstream_nodes: Set[str], 
                         downstream_nodes: Set[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create detailed tables of impacted nodes."""
-    
-    def create_node_data(node_ids: Set[str]) -> List[Dict]:
-        data = []
-        for node_id in node_ids:
-            attrs = graph.nodes[node_id]
-            row = {
-                'id': node_id,
-                'name': attrs.get('name', node_id),
-                'type': attrs.get('node_type', 'unknown'),
-                'package': attrs.get('package_name', ''),
-                'description': attrs.get('description', '')[:100] + "..." if attrs.get('description', '') and len(attrs.get('description', '')) > 100 else attrs.get('description', ''),
-            }
-            
-            # Add type-specific fields
-            if attrs.get('node_type') == 'model':
-                row['materialization'] = attrs.get('materialization', '')
-                row['database'] = attrs.get('database', '')
-                row['schema'] = attrs.get('schema', '')
-            elif attrs.get('node_type') == 'source':
-                row['source_name'] = attrs.get('source_name', '')
-                row['database'] = attrs.get('database', '')
-                row['schema'] = attrs.get('schema', '')
-            
-            data.append(row)
-        return data
-    
-    upstream_data = create_node_data(upstream_nodes)
-    downstream_data = create_node_data(downstream_nodes)
+    upstream_data = _create_node_data(graph, upstream_nodes)
+    downstream_data = _create_node_data(graph, downstream_nodes)
     
     upstream_df = pd.DataFrame(upstream_data)
     downstream_df = pd.DataFrame(downstream_data)
@@ -446,7 +446,7 @@ def main():
     
     if graph is None:
         st.error("Failed to load graph data. Please ensure the manifest parser has been run.")
-        st.info("Run: `python graph_storage.py path/to/manifest.json --storage-dir data`")
+        st.info("Run: `python manifest_parser.py path/to/manifest.json --storage-dir data`")
         return
     
     # Sidebar
@@ -630,10 +630,19 @@ def main():
             
             # Type breakdown
             if len(upstream_df) > 0:
-                type_counts = upstream_df['type'].value_counts()
-                fig = px.pie(values=type_counts.values, names=type_counts.index, 
-                           title="Upstream Node Types")
-                st.plotly_chart(fig, use_container_width=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    type_counts = upstream_df['type'].value_counts()
+                    fig = px.pie(values=type_counts.values, names=type_counts.index, 
+                               title="Upstream Node Types")
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    if 'dbt_project' in upstream_df.columns:
+                        package_counts = upstream_df['dbt_project'].value_counts()
+                        fig = px.pie(values=package_counts.values, names=package_counts.index, 
+                                   title="Upstream dbt Projects")
+                        st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No upstream dependencies found.")
     
@@ -644,10 +653,19 @@ def main():
             
             # Type breakdown
             if len(downstream_df) > 0:
-                type_counts = downstream_df['type'].value_counts()
-                fig = px.pie(values=type_counts.values, names=type_counts.index, 
-                           title="Downstream Node Types")
-                st.plotly_chart(fig, use_container_width=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    type_counts = downstream_df['type'].value_counts()
+                    fig = px.pie(values=type_counts.values, names=type_counts.index, 
+                               title="Downstream Node Types")
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    if 'dbt_project' in downstream_df.columns:
+                        package_counts = downstream_df['dbt_project'].value_counts()
+                        fig = px.pie(values=package_counts.values, names=package_counts.index, 
+                                   title="Downstream dbt Projects")
+                        st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No downstream dependencies found.")
     
