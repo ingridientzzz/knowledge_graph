@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive manifest.json parser for dbt projects.
+manifest.json parser for dbt projects.
 Transforms dbt metadata into a graph-friendly format with nodes, relationships, and properties.
 """
 
