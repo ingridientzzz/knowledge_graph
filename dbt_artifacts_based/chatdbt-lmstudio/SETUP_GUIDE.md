@@ -1,8 +1,8 @@
-# ChatDBT with LM Studio - Setup Guide
+# ChatDBT with Local LLM - Setup Guide
 
 ## Quick Start
 
-This guide will help you set up ChatDBT with LM Studio to chat with your dbt knowledge graph.
+This guide will help you set up ChatDBT with Local LLM to chat with your dbt knowledge graph.
 
 ### Prerequisites Checklist
 

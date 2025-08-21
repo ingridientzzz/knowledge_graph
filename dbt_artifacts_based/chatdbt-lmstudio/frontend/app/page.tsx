@@ -12,7 +12,7 @@ export default function Home() {
       <div className="container mx-auto p-4 h-screen flex flex-col">
         <header className="text-center mb-6">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            ChatDBT with LM Studio
+            ChatDBT with Local LLM
           </h1>
           <p className="text-gray-600">
             Chat with your dbt knowledge graph using local AI models

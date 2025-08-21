@@ -1,4 +1,4 @@
-# ChatDBT with LM Studio
+# ChatDBT with Local LLM
 
 A conversational AI application that allows users to chat with their dbt knowledge graph using LM Studio for local LLM inference.
 

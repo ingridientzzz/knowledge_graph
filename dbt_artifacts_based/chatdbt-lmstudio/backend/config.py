@@ -27,7 +27,7 @@ def _get_artifacts_path():
         return "../../code_docs"
 
 class Config:
-    """Configuration class for ChatDBT with LM Studio."""
+    """Configuration class for ChatDBT with Local LLM."""
     
     def __init__(self):
         # LM Studio configuration

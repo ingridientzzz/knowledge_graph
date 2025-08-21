@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Start ChatDBT with LM Studio backend
+# Start ChatDBT with Local LLM backend
 
-echo "Starting ChatDBT with LM Studio backend..."
+echo "Starting ChatDBT with Local LLM backend..."
 
 # Navigate to backend directory
 cd "$(dirname "$0")/backend"

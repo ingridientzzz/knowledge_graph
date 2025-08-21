@@ -161,7 +161,7 @@ class LMStudioLLM(CustomLLM):
             raise RuntimeError(f"LM Studio streaming completion failed: {e}")
 
 
-app = FastAPI(title="ChatDBT with LM Studio")
+app = FastAPI(title="ChatDBT with Local LLM")
 
 # Enable CORS
 app.add_middleware(
@@ -443,7 +443,7 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    return {"message": "ChatDBT with LM Studio API is running."}
+    return {"message": "ChatDBT with Local LLM API is running."}
 
 @app.get("/health")
 async def health_check():
